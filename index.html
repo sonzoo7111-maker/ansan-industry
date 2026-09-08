@@ -1,0 +1,814 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>디지털 도슨트</title>
+<link id="font-link" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;600;700&amp;family=Noto+Sans+KR:wght@400;500;700&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap">
+<style id="app-style">
+:root{
+  --bg:#E9E9E0;
+  --bg-elevated:#F5F4EC;
+  --ink:#22261F;
+  --ink-soft:#5B5E51;
+  --line:#D2D0C1;
+  --celadon:#3F7059;
+  --celadon-soft:#DCEAE1;
+  --brass:#8C6526;
+  --danger:#9C4A38;
+  --danger-soft:#F3E1DC;
+  --qr-frame:#FFFFFF;
+  --shadow:0 1px 2px rgba(30,32,25,.08), 0 8px 24px rgba(30,32,25,.07);
+  --font-display:'Noto Serif KR',serif;
+  --font-body:'Noto Sans KR',sans-serif;
+  --font-mono:'IBM Plex Mono',monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#14170F; --bg-elevated:#1E2217; --ink:#ECE9DC; --ink-soft:#A6A793;
+    --line:#343827; --celadon:#7FB69A; --celadon-soft:#233227; --brass:#D2A25C;
+    --danger:#D98670; --danger-soft:#3A231E; --qr-frame:#FFFFFF;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14170F; --bg-elevated:#1E2217; --ink:#ECE9DC; --ink-soft:#A6A793;
+  --line:#343827; --celadon:#7FB69A; --celadon-soft:#233227; --brass:#D2A25C;
+  --danger:#D98670; --danger-soft:#3A231E; --qr-frame:#FFFFFF;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--font-body);
+  min-height:100vh; line-height:1.5;
+}
+img{max-width:100%;display:block;}
+button,input,textarea{font-family:inherit;color:inherit;}
+a{color:var(--celadon);}
+:focus-visible{outline:2px solid var(--celadon); outline-offset:2px;}
+.hairline{height:1px;background:var(--line);border:0;margin:0;}
+
+.site-header{
+  padding:2rem clamp(1rem,4vw,3rem) 1.25rem;
+  display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;flex-wrap:wrap;
+  border-bottom:1px solid var(--line);
+}
+.hall-name{font-family:var(--font-display);font-weight:600;font-size:clamp(1.5rem,3vw,2.3rem);text-wrap:balance;margin:0;}
+.hall-name[contenteditable="true"]{outline:1px dashed var(--celadon);padding:.1em .3em;border-radius:2px;}
+.subtitle{color:var(--ink-soft);font-size:.92rem;margin:.35rem 0 0;}
+.subtitle[contenteditable="true"]{outline:1px dashed var(--celadon);padding:.1em .3em;border-radius:2px;display:inline-block;}
+.header-actions{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;}
+
+.btn{
+  font-family:var(--font-body);font-size:.85rem;font-weight:500;
+  padding:.55rem 1rem;border-radius:3px;border:1px solid var(--line);
+  background:var(--bg-elevated);color:var(--ink);cursor:pointer;
+  transition:background .15s, border-color .15s;
+}
+.btn:hover{border-color:var(--celadon);}
+.btn-primary{background:var(--celadon);border-color:var(--celadon);color:#fff;}
+.btn-primary:hover{filter:brightness(1.08);}
+.btn-danger{background:transparent;border-color:var(--danger);color:var(--danger);}
+.btn-danger:hover{background:var(--danger-soft);}
+.btn-ghost{background:transparent;}
+.btn-sm{padding:.4rem .75rem;font-size:.78rem;}
+.btn[disabled]{opacity:.5;cursor:not-allowed;}
+
+.notice{
+  margin:1.25rem clamp(1rem,4vw,3rem) 0;padding:.85rem 1.1rem;
+  background:var(--celadon-soft);border:1px solid var(--celadon);border-radius:3px;
+  font-size:.88rem;display:flex;justify-content:space-between;gap:1rem;align-items:center;color:var(--ink);
+}
+.notice button{background:none;border:0;color:var(--celadon);cursor:pointer;font-weight:600;font-size:.82rem;}
+
+.gallery-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+  gap:1.1rem;padding:1.75rem clamp(1rem,4vw,3rem) 3rem;
+}
+.card{
+  background:var(--bg-elevated);border:1px solid var(--line);border-radius:4px;
+  padding:1.1rem;display:flex;flex-direction:column;gap:.65rem;box-shadow:var(--shadow);
+}
+.catalog-tag{
+  font-family:var(--font-mono);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--brass);
+}
+.card-title{font-family:var(--font-display);font-weight:600;font-size:1.1rem;text-wrap:balance;margin:0;}
+.card-body-row{display:flex;gap:.9rem;align-items:flex-start;}
+.qr-chip{background:var(--qr-frame);padding:.4rem;border-radius:3px;display:inline-flex;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.15);}
+.qr-chip canvas,.qr-chip img{display:block;}
+.card-links{display:flex;flex-direction:column;gap:.35rem;flex:1;justify-content:center;}
+.card-links a{font-size:.85rem;text-decoration:none;font-weight:500;}
+.card-langs{font-family:var(--font-mono);font-size:.72rem;color:var(--ink-soft);}
+.card-actions{display:flex;gap:.4rem;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:.65rem;margin-top:.15rem;}
+.add-card{
+  border:1px dashed var(--line);border-radius:4px;display:flex;align-items:center;justify-content:center;
+  min-height:150px;background:transparent;color:var(--ink-soft);cursor:pointer;font-size:.95rem;
+}
+.add-card:hover{border-color:var(--celadon);color:var(--celadon);}
+
+.detail-wrap{max-width:640px;margin:0 auto;padding:2rem 1.25rem 4rem;}
+.back-link{font-size:.85rem;text-decoration:none;color:var(--ink-soft);display:inline-block;margin-bottom:1.5rem;}
+.back-link:hover{color:var(--celadon);}
+.lang-tabs{display:flex;gap:.4rem;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:.9rem;margin-bottom:1.6rem;}
+.lang-tab{
+  font-size:.85rem;padding:.4rem .95rem;border-radius:999px;border:1px solid var(--line);
+  background:transparent;color:var(--ink-soft);cursor:pointer;
+}
+.lang-tab[aria-selected="true"]{background:var(--celadon-soft);color:var(--celadon);border-color:var(--celadon);font-weight:600;}
+.exhibit-meta{font-family:var(--font-mono);font-size:.72rem;color:var(--brass);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.5rem;}
+.exhibit-title{font-family:var(--font-display);font-weight:600;font-size:clamp(1.5rem,4.5vw,2.15rem);text-wrap:balance;margin:0 0 1rem;}
+.exhibit-image{border-radius:4px;margin-bottom:1.4rem;border:1px solid var(--line);}
+.exhibit-body{font-size:1.05rem;line-height:1.9;white-space:pre-wrap;max-width:64ch;}
+.detail-qr-row{margin-top:2.5rem;padding-top:1.5rem;border-top:1px solid var(--line);display:flex;align-items:center;gap:1rem;}
+.detail-qr-row .qr-chip{padding:.3rem;}
+.detail-qr-caption{font-size:.8rem;color:var(--ink-soft);}
+.empty-state{padding:3rem clamp(1rem,4vw,3rem);color:var(--ink-soft);font-size:.95rem;}
+
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(20,22,15,.55);display:flex;align-items:flex-start;justify-content:center;
+  padding:3vh 1rem;overflow-y:auto;z-index:50;
+}
+.modal{
+  background:var(--bg-elevated);border-radius:5px;max-width:640px;width:100%;box-shadow:var(--shadow);
+  padding:1.6rem clamp(1.1rem,3vw,2rem) 2rem;margin:auto 0;
+}
+.modal h2{font-family:var(--font-display);font-size:1.3rem;margin:0 0 1.1rem;}
+.field{margin-bottom:1rem;}
+.field label{display:block;font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);margin-bottom:.35rem;}
+.field input[type=text],.field textarea{
+  width:100%;border:1px solid var(--line);border-radius:3px;padding:.6rem .7rem;background:var(--bg);color:var(--ink);
+  font-size:.95rem;font-family:var(--font-body);
+}
+.field textarea{min-height:6.5rem;resize:vertical;line-height:1.65;}
+.image-field-row{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;}
+.image-preview{width:88px;height:88px;object-fit:cover;border-radius:3px;border:1px solid var(--line);flex-shrink:0;}
+.image-preview-empty{
+  width:88px;height:88px;border:1px dashed var(--line);border-radius:3px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;text-align:center;font-size:.72rem;color:var(--ink-soft);padding:.3rem;
+}
+.image-field-actions{display:flex;gap:.5rem;flex-wrap:wrap;}
+.edit-lang-tabs{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1rem;}
+.edit-lang-tab{
+  font-family:var(--font-mono);font-size:.75rem;padding:.35rem .7rem;border-radius:3px;border:1px solid var(--line);
+  background:transparent;color:var(--ink-soft);cursor:pointer;
+}
+.edit-lang-tab[aria-selected="true"]{background:var(--celadon);border-color:var(--celadon);color:#fff;}
+.add-lang-row{display:flex;gap:.5rem;margin-bottom:1.2rem;flex-wrap:wrap;align-items:flex-end;}
+.add-lang-row .field{margin-bottom:0;flex:1;min-width:110px;}
+.lang-manage-list{display:flex;flex-direction:column;gap:.5rem;margin-bottom:1rem;}
+.lang-manage-row{
+  display:flex;align-items:center;gap:.75rem;padding:.55rem .7rem;border:1px solid var(--line);border-radius:3px;
+  background:var(--bg);flex-wrap:wrap;
+}
+.lang-manage-code{font-family:var(--font-mono);font-size:.78rem;color:var(--brass);text-transform:uppercase;min-width:2.5rem;}
+.lang-manage-label{font-weight:500;flex:1;min-width:80px;}
+.lang-manage-count{font-size:.76rem;color:var(--ink-soft);}
+.ai-row{display:flex;justify-content:flex-end;margin:-.5rem 0 .75rem;}
+.ai-btn{font-size:.76rem;color:var(--celadon);background:none;border:1px solid var(--celadon);border-radius:3px;padding:.3rem .6rem;cursor:pointer;}
+.ai-btn[disabled]{opacity:.55;cursor:wait;}
+.modal-actions{display:flex;justify-content:space-between;gap:.75rem;margin-top:1.5rem;flex-wrap:wrap;}
+.modal-actions .right{display:flex;gap:.6rem;}
+.helper-text{font-size:.78rem;color:var(--ink-soft);margin-top:-.4rem;margin-bottom:1rem;}
+.qr-modal-body{display:flex;flex-direction:column;align-items:center;gap:1rem;text-align:center;}
+.qr-modal-body .qr-chip{padding:1rem;}
+.toast{
+  position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);
+  padding:.7rem 1.2rem;border-radius:4px;font-size:.85rem;box-shadow:var(--shadow);z-index:99;max-width:90vw;
+}
+
+#print-label{display:none;}
+@media print{
+  body>*:not(#print-label){display:none !important;}
+  #print-label{
+    display:flex !important;flex-direction:column;align-items:center;gap:.8rem;
+    padding:2rem;color:#000;background:#fff;
+  }
+  #print-label .catalog-tag{color:#000;}
+  #print-label .exhibit-title{color:#000;}
+}
+@media (max-width:520px){
+  .card-body-row{flex-direction:column;}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script id="state-json" type="application/json">{"meta":{"hallName":"안산산업역사박물관 기획전시","subtitle":"다국어 전시 안내 · 휴대폰으로 QR을 스캔해 감상하세요","languages":[["ko","한국어"],["en","English"],["ja","日本語"],["zh","中文"],["ru","Русский"]]},"isSample":false,"nextId":14,"exhibits":[{"id":1,"catalogNo":"01","imageUrl":"","langs":{"ko":{"label":"한국어","title":"《산업×도시=40》 전시개요","body":"산업은 물건을 만드는 데서 그치지 않는다.\n새로운 기술과 제품은 우리의 일상을 바꾸고, 일터와 집, 거리와 도시의 모습까지 변화시켜 왔다.\n1986년 시로 출발한 안산의 지난 40년 역시 산업의 성장과 변화 속에서 만들어졌다.\n산업단지를 중심으로 도시가 확장되고,\n새로운 기술과 제품이 생활 속으로 들어오면서 사람들의 삶과 도시의 풍경도 함께 달라졌다.\n《산업×도시=40》은 안산시 승격 40주년을 맞아,\n산업과 도시, 그리고 그 안에서 살아온 사람들의 시간을 돌아보는 전시다.\nPART 1. 〈전자다반사〉에서는 전자산업의 발전과 함께 달라져 온 우리의 일상을,\nPART 2. 〈도시의 생애주기〉에서는 계획에서 시작해 삶이 쌓이며 변화해 온 안산의 시간을 따라간다.\n산업이 바꾼 일상, 그리고 그 일상이 만들어 온 도시의 시간.\n두 개의 이야기를 통해 지난 40년의 안산을 다시 바라본다."},"en":{"label":"English","title":"“Industry×City=40” Exhibition Overview","body":"Industry does more than manufacture things.\nNew technologies and products have transformed our daily lives, reshaping our workplaces, homes, streets, and cities.\nThe 40 years since Ansan became a city in 1986 were likewise shaped by the growth and change of industry.\nAs the city expanded around its industrial complexes,\nnew technologies and products entered everyday life, changing both people's lives and the face of the city.\nMarking the 40th anniversary of Ansan's designation as a city, “Industry×City=40” is an exhibition that looks back on industry, the city, and the lives of the people who lived within it.\nPART 1, “Everyday Electronics,” traces our daily lives as they changed alongside the development of the electronics industry,\nwhile PART 2, “The Life Cycle of a City,” follows the story of Ansan as it grew from a plan into a place shaped by accumulated lives.\nThe everyday life that industry transformed, and the time of the city that everyday life built.\nThrough these two stories, we look again at the past 40 years of Ansan."},"zh":{"label":"中文","title":"《产业×城市=40》展览概要","body":"产业并不止步于制造物品。\n新技术与新产品改变了我们的日常生活,也改变了工作场所、住宅、街道乃至城市的面貌。\n自1986年建市以来,安山走过的40年同样是在产业的成长与变化中形成的。\n城市以产业园区为中心不断扩张,\n新技术与新产品融入日常生活,人们的生活与城市的风貌也随之改变。\n《产业×城市=40》正值安山市升格40周年之际举办,是一场回顾产业、城市以及生活于其中的人们的时光的展览。\n第一部分〈电子茶饭事〉追溯了随电子产业发展而变化的日常生活,\n第二部分〈城市的生命周期〉则沿着安山从规划起步、随生活积累而变化的时间轨迹展开。\n产业改变的日常,以及那日常所塑造的城市时光。\n通过这两个故事,重新审视安山走过的40年。"},"ja":{"label":"日本語","title":"《産業×都市=40》展示概要","body":"産業はものを作ることだけにとどまらない。\n新しい技術と製品は私たちの日常を変え、職場や家、街や都市の姿までも変えてきた。\n1986年に市として出発した安山のこの40年もまた、産業の成長と変化の中で形づくられてきた。\n産業団地を中心に都市が拡大し、\n新しい技術と製品が生活の中に入り込むことで、人々の暮らしと都市の風景もともに変わっていった。\n《産業×都市=40》は、安山市昇格40周年を迎え、産業と都市、そしてその中で生きてきた人々の時間を振り返る展示である。\nPART 1.〈電子茶飯事〉では、電子産業の発展とともに変わってきた私たちの日常を、\nPART 2.〈都市のライフサイクル〉では、計画から始まり、暮らしが積み重なりながら変化してきた安山の時間をたどる。\n産業が変えた日常、そしてその日常がつくってきた都市の時間。\n二つの物語を通して、この40年の安山をあらためて見つめ直す。"},"ru":{"label":"Русский","title":"Обзор выставки «Промышленность × Город = 40»","body":"Промышленность не ограничивается производством вещей.\nНовые технологии и изделия изменили нашу повседневную жизнь, преобразив облик рабочих мест, домов, улиц и городов.\nПрошедшие 40 лет Ансана, получившего статус города в 1986 году, тоже сложились в русле роста и перемен промышленности.\nГород разрастался вокруг промышленных комплексов,\nи по мере того как новые технологии и товары входили в повседневную жизнь, менялись и жизнь людей, и облик города.\nВыставка «Промышленность × Город = 40», приуроченная к 40-летию присвоения Ансану статуса города, оглядывается на историю промышленности, города и людей, живших в нём.\nЧасть 1 «Электроника как обыденность» прослеживает, как менялась наша повседневная жизнь вместе с развитием электронной промышленности,\nа часть 2 «Жизненный цикл города» следует за историей Ансана — от замысла до города, сформированного накопленной жизнью.\nПовседневность, изменённая промышленностью, и время города, созданное этой повседневностью.\nЧерез эти две истории мы вновь всматриваемся в прошедшие 40 лет Ансана."}}},{"id":2,"catalogNo":"02","imageUrl":"","langs":{"ko":{"label":"한국어","title":"PART 1. 전자다반사","body":"우리의 일상 속에는 수많은 전자제품이 등장하고 사라졌다.\n라디오를 통해 세상의 소리를 듣고, 텔레비전 앞에 모여 같은 장면을 바라보았다.\n전화는 멀리 떨어진 사람을 이어 주었고,\n컴퓨터와 새로운 전자기기는 일하고 소통하고 즐기는 방식을 바꾸어 놓았다.\n그렇게 전자제품은 어느새 밥 먹고 차 마시듯 흔한, 우리 삶의 다반사(茶飯事)가 되었다.\n이 흔함의 뒤편에는 더 작고 빠르게 발전해 온 전자기술과, 그것을 만들어 온 산업의 오랜 여정이 있다.\n기술이 새 물건을 낳으면, 그 물건은 다시 우리의 생활과 문화를 바꾸어 놓았다.\n〈전자다반사〉는 그 흔했던 물건들을 다시 꺼내어, 전자산업과 기술이 걸어온 길을 따라\n그것들이 어떻게 달라져 왔는지를 살펴본다.\n산업의 변화는 그렇게, 아무 일도 아닌 듯 우리의 평범한 하루 속에 스며들어 있다."},"en":{"label":"English","title":"PART 1. Everyday Electronics","body":"Countless electronic products have come and gone in our everyday lives.\nWe listened to the sounds of the world through the radio, and gathered before the television to watch the same scenes.\nThe telephone connected people who were far apart, and computers and new electronic devices changed the way we work, communicate, and enjoy ourselves.\nIn this way, electronic products became as commonplace as eating a meal or drinking tea — a routine, everyday matter (茶飯事, dabansa) of our lives.\nBehind this ordinariness lies electronic technology that has grown smaller and faster, and the long journey of the industry that created it.\nAs technology gave birth to new objects, those objects in turn transformed our lives and culture.\n“Everyday Electronics” brings back these once-familiar objects, tracing the path the electronics industry and its technology have taken to see how they have changed along the way.\nIn this way, the changes of industry have quietly woven themselves into our ordinary, unremarkable days."},"zh":{"label":"中文","title":"第一部分. 电子茶饭事","body":"在我们的日常生活中,无数电子产品曾经登场又悄然退场。\n人们通过收音机聆听世界的声音,聚在电视机前注视同一个画面。\n电话连接了远隔两地的人们,电脑与新兴电子设备改变了人们工作、交流与娱乐的方式。\n就这样,电子产品渐渐变得如同吃饭喝茶一般寻常,成为我们生活中的\"茶饭事\"。\n在这份寻常的背后,是不断变得更小、更快的电子技术,以及缔造这一切的产业的漫长历程。\n技术催生新的物品,而物品又反过来改变了我们的生活与文化。\n〈电子茶饭事〉重新拾起这些曾经寻常的物件,沿着电子产业与技术走过的道路,审视它们是如何一步步发生改变的。\n产业的变化,就这样悄然无声地渗透进我们平凡的每一天。"},"ja":{"label":"日本語","title":"PART 1. 電子茶飯事","body":"私たちの日常には、数多くの電子製品が登場しては消えていった。\nラジオを通じて世界の音を聞き、テレビの前に集まって同じ場面を見つめた。\n電話は遠く離れた人と人をつなぎ、コンピューターや新しい電子機器は、働き方やコミュニケーション、楽しみ方までも変えていった。\nそうして電子製品は、いつしかご飯を食べ、お茶を飲むのと同じくらいありふれた、私たちの暮らしの「茶飯事」となった。\nこのありふれた日常の裏側には、より小さく、より速く発展してきた電子技術と、それを生み出してきた産業の長い歩みがある。\n技術が新しいものを生み出せば、そのものはまた私たちの生活と文化を変えていった。\n〈電子茶飯事〉は、そのありふれた物たちを再び取り出し、電子産業と技術がたどってきた道に沿って、それらがどのように変わってきたのかを見つめ直す。\n産業の変化は、そうして何気ない私たちの平凡な一日の中に、静かに染み込んでいる。"},"ru":{"label":"Русский","title":"Часть 1. Электроника как обыденность","body":"В нашей повседневной жизни появлялись и исчезали бесчисленные электронные приборы.\nМы слушали звуки мира по радио и собирались у телевизора, чтобы смотреть одну и ту же картинку.\nТелефон связывал людей, находящихся далеко друг от друга, а компьютеры и новые электронные устройства изменили то, как мы работаем, общаемся и развлекаемся.\nТак электроника незаметно стала такой же привычной, как еда или чаепитие, — обыденным делом (茶飯事) нашей жизни.\nЗа этой обыденностью стоит электронная техника, становившаяся всё меньше и быстрее, и долгий путь промышленности, создавшей её.\nТехнологии порождали новые вещи, а эти вещи, в свою очередь, меняли нашу жизнь и культуру.\n«Электроника как обыденность» вновь достаёт эти некогда привычные вещи и прослеживает путь, пройденный электронной промышленностью и технологиями, чтобы увидеть, как они менялись.\nТак перемены в промышленности незаметно, будто сами собой, вплетаются в наши обычные дни."}}},{"id":3,"catalogNo":"03","imageUrl":"","langs":{"ko":{"label":"한국어","title":"PART 1-1. 전자설명서","body":"전자제품의 기본을 읽다\n전자제품은 우리 일상에서 쉽게 접할 수 있지만,\n그 안에서 어떤 원리로 작동하는지는 잘 드러나지 않는다.\n전자기술은 진공관에서 시작해 트랜지스터와 집적회로(IC)를 거치며\n점차 작아지고 정교해졌고,\nPCB를 통해 이 모든 부품이 하나의 구조로 연결되었다.\n이 작은 변화들이 전자제품의 형태와 성능을 바꾸며,\n오늘날 우리가 사용하는 다양한 기기의 기반이 되었다.\n보이지 않는 곳에서 작동해 온 이 원리들을,\n〈전자설명서〉에서 하나씩 들여다본다."},"en":{"label":"English","title":"PART 1-1. The Electronics Manual","body":"Reading the Basics of Electronic Products\nElectronic products are easy to encounter in our daily lives, yet the principles by which they operate remain largely hidden from view.\nElectronic technology began with the vacuum tube and, passing through transistors and integrated circuits (ICs), grew progressively smaller and more sophisticated, while the PCB connected all these components into a single structure.\nThese small changes transformed the form and performance of electronic products, and became the foundation for the many devices we use today.\n“The Electronics Manual” looks closely, one by one, at these principles that have long worked unseen."},"zh":{"label":"中文","title":"第一部分-1. 电子说明书","body":"读懂电子产品的基础\n电子产品在日常生活中随处可见,但其内部运作的原理却鲜为人知。\n电子技术从真空管出发,经过晶体管与集成电路(IC),逐渐变得更小、更精密,并通过印刷电路板(PCB)将所有元件连接成一体结构。\n这些微小的变化改变了电子产品的形态与性能,成为今天我们所使用的各种设备的基础。\n〈电子说明书〉将这些一直在看不见之处运作的原理,一一呈现出来。"},"ja":{"label":"日本語","title":"PART 1-1. 電子取扱説明書","body":"電子製品の基本を読み解く\n電子製品は私たちの日常で気軽に触れることができるが、その内部でどのような原理で作動しているのかはあまり知られていない。\n電子技術は真空管から始まり、トランジスタや集積回路(IC)を経て次第に小さく、精密になっていき、PCB(プリント基板)によってこれらすべての部品がひとつの構造へとつながった。\nこうした小さな変化が電子製品の形と性能を変え、今日私たちが使うさまざまな機器の基盤となった。\n見えないところで働き続けてきたこれらの原理を、〈電子取扱説明書〉でひとつずつのぞいてみる。"},"ru":{"label":"Русский","title":"Часть 1-1. Инструкция по электронике","body":"Читаем основы электронных приборов\nЭлектронные приборы легко встретить в повседневной жизни, но принципы их работы редко становятся очевидными.\nЭлектронная техника начиналась с электронной лампы и, пройдя через транзисторы и интегральные схемы (ИС), становилась всё меньше и совершеннее, а печатная плата (PCB) объединила все эти компоненты в единую структуру.\nЭти небольшие изменения преобразили форму и характеристики электронных приборов и легли в основу множества устройств, которыми мы пользуемся сегодня.\n«Инструкция по электронике» шаг за шагом раскрывает эти принципы, незаметно работавшие где-то внутри."}}},{"id":4,"catalogNo":"04","imageUrl":"","langs":{"ko":{"label":"한국어","title":"PART 1-2. 전자로 넓어진 일상","body":"전자기술의 발전은 세상의 소리와 모습을 일상 가까이 가져왔다.\n라디오를 통해 멀리서 전해지는 소식과 음악을 듣고,\n텔레비전을 통해 소리와 함께 움직이는 화면을 만나게 되었다.\n새로운 전자기기의 등장은 사람들이 정보를 접하고 문화를 즐기는 방식을 바꾸어 놓았다.\n소리에서 화면으로, 전자기술은 우리가 세상을 보고 듣는 경험을 넓히며\n일상의 풍경을 변화시켜 왔다."},"en":{"label":"English","title":"PART 1-2. A World Widened by Electronics","body":"The advance of electronic technology brought the sounds and sights of the world closer to everyday life.\nThrough the radio, we heard news and music carried from afar, and through television, we encountered moving pictures accompanied by sound.\nThe emergence of new electronic devices changed the way people accessed information and enjoyed culture.\nFrom sound to screen, electronic technology broadened our experience of seeing and hearing the world, transforming the landscape of everyday life."},"zh":{"label":"中文","title":"第一部分-2. 因电子科技而拓宽的日常","body":"电子技术的发展,把世界的声音与影像带到了日常生活的身边。\n人们通过收音机,聆听从远方传来的消息与音乐;通过电视机,遇见了有声有画的动态影像。\n新型电子设备的出现,改变了人们获取信息、享受文化的方式。\n从声音到画面,电子技术不断拓展着我们观看与聆听世界的经验,也改变了日常生活的风景。"},"ja":{"label":"日本語","title":"PART 1-2. 電子技術によって広がった日常","body":"電子技術の発展は、世界の音と姿を日常のすぐそばまで運んできた。\nラジオを通じて遠くから届くニュースや音楽を聞き、テレビを通じて音とともに動く映像に出会うようになった。\n新しい電子機器の登場は、人々が情報に触れ、文化を楽しむ方法を変えていった。\n音から映像へ、電子技術は私たちが世界を見て聞く経験を広げながら、日常の風景を変えてきた。"},"ru":{"label":"Русский","title":"Часть 1-2. Повседневность, расширенная электроникой","body":"Развитие электронной техники приблизило к повседневной жизни звуки и образы всего мира.\nЧерез радио мы слышали новости и музыку, доносившиеся издалека, а благодаря телевидению увидели движущуюся картинку со звуком.\nПоявление новых электронных устройств изменило то, как люди получали информацию и наслаждались культурой.\nОт звука к изображению — электронная техника расширяла наш опыт видеть и слышать мир, меняя облик повседневной жизни."}}},{"id":5,"catalogNo":"05","imageUrl":"","langs":{"ko":{"label":"한국어","title":"PART 1-3. 전자로 이어진 일상","body":"눈에 보이지 않는 신호는 멀리 떨어진 사람과 세상을 이어 왔다.\n우리나라의 근대 통신은 1885년 서울과 인천을 잇는 전신선이 설치되면서 시작되었다.\n짧은 메시지를 전달하던 전보에서 출발한 통신은 전화와 인터넷을 거치며 발전했고,\n오늘날에는 언제 어디서나 연결되는 환경으로 이어졌다.\n전자기술의 발전은 시간과 공간의 제약을 넘어,\n사람과 사람을 잇는 방식을 계속해서 바꾸어 왔다."},"en":{"label":"English","title":"PART 1-3. A World Connected by Electronics","body":"Invisible signals have long connected people and the world across great distances.\nKorea's modern communications began in 1885, when a telegraph line linking Seoul and Incheon was installed.\nStarting from the telegraph, which carried short messages, communication developed through the telephone and the internet, leading today to an environment where we are connected anytime, anywhere.\nThe advance of electronic technology has continually transformed the way people connect with one another, overcoming the constraints of time and space."},"zh":{"label":"中文","title":"第一部分-3. 因电子科技而相连的日常","body":"肉眼看不见的信号,连接起了相隔遥远的人与世界。\n我国的近代通信始于1885年架设连接首尔与仁川的电报线路。\n从传递简短讯息的电报出发,通信经历电话、互联网的发展阶段,延续至今形成了随时随地皆可连接的环境。\n电子技术的发展,不断跨越时间与空间的限制,持续改变着人与人相连的方式。"},"ja":{"label":"日本語","title":"PART 1-3. 電子技術でつながった日常","body":"目に見えない信号は、遠く離れた人と世界とを結んできた。\n韓国の近代通信は、1885年にソウルと仁川を結ぶ電信線が設置されたことに始まる。\n短いメッセージを伝えた電報から出発した通信は、電話やインターネットを経て発展し、今日ではいつでもどこでもつながる環境へとつながった。\n電子技術の発展は、時間と空間の制約を越えて、人と人とをつなぐ方法を絶えず変え続けてきた。"},"ru":{"label":"Русский","title":"Часть 1-3. Повседневность, связанная электроникой","body":"Невидимые сигналы издавна соединяли людей и мир, разделённые большими расстояниями.\nСовременная связь в Корее началась в 1885 году с прокладки телеграфной линии между Сеулом и Инчхоном.\nНачавшись с телеграфа, передававшего короткие сообщения, связь развивалась через телефон и интернет и сегодня привела к среде, где мы на связи в любое время и в любом месте.\nРазвитие электронной техники, преодолевая ограничения времени и пространства, непрерывно меняло способы, которыми люди соединяются друг с другом."}}},{"id":6,"catalogNo":"06","imageUrl":"","langs":{"ko":{"label":"한국어","title":"PART 1-4. MADE IN ANSAN","body":"안산의 산업현장에서는\n우리의 일상을 채운 다양한 생활제품이 만들어졌다.\n타자기와 컴퓨터, 텔레비전과 라디오카세트부터\n밥솥과 믹서기, 선풍기와 전기난로까지,\n안산에서 생산된 제품들은 집과 일터 곳곳에서 사용되며\n사람들의 생활과 함께해 왔다.\n우리 주위의 익숙한 물건들 속에는,\n그렇게 안산의 이름이 새겨져 있었다."},"en":{"label":"English","title":"PART 1-4. Made in Ansan","body":"In the industrial sites of Ansan, a wide variety of everyday products that filled our daily lives were made.\nFrom typewriters and computers to televisions and radio-cassette players, from rice cookers and blenders to electric fans and heaters,\nproducts manufactured in Ansan were used throughout homes and workplaces, accompanying people's lives all along.\nWithin the familiar objects around us, the name of Ansan was quietly inscribed."},"zh":{"label":"中文","title":"第一部分-4. MADE IN ANSAN(安山制造)","body":"在安山的产业现场,诞生了填满我们日常生活的各种生活用品。\n从打字机、电脑,到电视机、收录音机,再到电饭煲、搅拌机,以及电风扇、电暖炉,\n安山生产的产品被广泛使用于家中与工作场所的各个角落,一路陪伴着人们的生活。\n在我们身边这些熟悉的物件之中,就这样刻着\"安山\"的名字。"},"ja":{"label":"日本語","title":"PART 1-4. MADE IN ANSAN(安山製)","body":"安山の産業現場では、私たちの日常を満たしたさまざまな生活製品が作られてきた。\nタイプライターやコンピューター、テレビやラジカセから、炊飯器やミキサー、扇風機や電気ストーブに至るまで、\n安山で生産された製品は家や職場の隅々で使われ、人々の暮らしとともにあった。\n私たちの身の回りにある見慣れた物の中には、そのように安山の名前が刻まれていた。"},"ru":{"label":"Русский","title":"Часть 1-4. Сделано в Ансане","body":"На промышленных предприятиях Ансана создавалось множество бытовых товаров, наполнявших нашу повседневную жизнь.\nОт пишущих машинок и компьютеров, телевизоров и радиомагнитол до рисоварок и блендеров, вентиляторов и электрообогревателей —\nизделия, произведённые в Ансане, использовались в домах и на рабочих местах повсюду, сопровождая жизнь людей.\nВ привычных вещах вокруг нас так было вписано имя Ансана."}}},{"id":7,"catalogNo":"07","imageUrl":"","langs":{"ko":{"label":"한국어","title":"PART 2. 도시의 생애주기","body":"도시는 한순간에 만들어지지 않는다.\n종이 위에 그려진 계획에서 시작해 길이 놓이고 건물이 들어서며, 사람들이 모여 살아가기 시작한다.\n시간이 흐르면 도시의 영역은 넓어지고, 오래된 공간은 사라지거나 새로운 모습으로 다시 태어난다.\n안산도 그렇게 태어나고 자라 왔다.\n산업과 함께 성장한 이 도시에는, 지난 40년 동안 수많은 공간이 생겨나고 사라지며, 그곳을 살아온 사람들의 일상과 기억이 차곡차곡 쌓였다.\n〈도시의 생애주기〉는 도시가 없던 시절의 풍경에서부터 계획과 건설, 확장과 변화에 이르기까지, 안산이 만들어져 온 시간을 따라간다.\n도면과 사진, 기록자료와 시민들의 기억이, 그 시간을 하나씩 되짚어 준다.\n도시는 완성되는 것이 아니라, 시간과 삶이 쌓이며 끊임없이 다시 만들어진다."},"en":{"label":"English","title":"PART 2. The Life Cycle of a City","body":"A city is not made in an instant.\nIt begins with a plan drawn on paper; roads are laid, buildings rise, and people begin to gather and live there.\nAs time passes, the city's territory expands, and old spaces disappear or are reborn in new forms.\nAnsan, too, was born and has grown in this way.\nIn this city, which grew together with industry, countless spaces have appeared and vanished over the past 40 years, and the everyday lives and memories of the people who lived there have steadily accumulated.\n“The Life Cycle of a City” follows the time through which Ansan was made — from the landscape before the city existed, through planning and construction, to expansion and change.\nDrawings and photographs, records and citizens' memories retrace that time, piece by piece.\nA city is never truly finished; it is endlessly remade as time and life accumulate."},"zh":{"label":"中文","title":"第二部分. 城市的生命周期","body":"城市并非一朝一夕建成。\n它始于纸上的规划,道路随之铺设,建筑逐渐林立,人们开始聚居于此,生活展开。\n随着时间流逝,城市的范围不断扩大,古老的空间或消失,或以崭新的面貌重生。\n安山也是如此诞生并成长起来的。\n在这座与产业一同成长的城市里,过去40年间无数空间兴起又消逝,生活于此的人们的日常与记忆也一点一滴地累积下来。\n〈城市的生命周期〉沿着安山被建造起来的时间轨迹展开——从城市尚未存在时的风景,到规划与建设,再到扩张与变化。\n图纸与照片、记录资料与市民的记忆,将这段时光一一还原。\n城市并非完成品,而是在时间与生活的累积中,不断被重新塑造。"},"ja":{"label":"日本語","title":"PART 2. 都市のライフサイクル","body":"都市は一瞬にしてつくられるものではない。\n紙の上に描かれた計画から始まり、道がつくられ、建物が立ち並び、人々が集まって暮らし始める。\n時が流れると都市の領域は広がり、古い空間は姿を消したり、新しい姿へと生まれ変わったりする。\n安山もまた、そのように生まれ、育ってきた。\n産業とともに成長してきたこの都市には、過去40年の間に数多くの空間が生まれては消え、そこで生きてきた人々の日常と記憶が積み重なってきた。\n〈都市のライフサイクル〉は、都市がなかった頃の風景から計画と建設、拡張と変化に至るまで、安山がつくられてきた時間をたどる。\n図面や写真、記録資料と市民の記憶が、その時間をひとつずつたどり直してくれる。\n都市は完成するものではなく、時間と暮らしが積み重なりながら絶えずつくり直されていく。"},"ru":{"label":"Русский","title":"Часть 2. Жизненный цикл города","body":"Город не строится в одно мгновение.\nОн начинается с плана, нарисованного на бумаге: прокладываются дороги, возводятся здания, и люди начинают собираться и жить здесь.\nСо временем территория города расширяется, а старые пространства исчезают или возрождаются в новом облике.\nТак же родился и вырос Ансан.\nВ этом городе, росшем вместе с промышленностью, за минувшие 40 лет возникали и исчезали бесчисленные пространства, а повседневная жизнь и память живших здесь людей постепенно накапливались.\n«Жизненный цикл города» прослеживает время, за которое был создан Ансан, — от пейзажа, каким он был до появления города, через планирование и строительство, к расширению и переменам.\nЧертежи и фотографии, архивные материалы и воспоминания горожан шаг за шагом воссоздают это время.\nГород не бывает завершён — он непрерывно создаётся заново по мере того, как накапливаются время и жизнь."}}},{"id":8,"catalogNo":"08","imageUrl":"","langs":{"ko":{"label":"한국어","title":"PART 2-1. 종이 위에서 시작하다","body":"도시가 만들어지기 전,\n안산의 모습은 지금과는 크게 달랐다.\n1970년대, 반월신공업도시 건설계획이 추진되면서\n도로와 산업단지, 주거지역과 생활공간이 종이 위에 그려지기 시작했다.\n도면 위의 선과 계획으로 시작된 도시는\n점차 실제 공간으로 모습을 드러내며\n오늘날 안산의 바탕이 되었다."},"en":{"label":"English","title":"PART 2-1. Beginning on Paper","body":"Before the city was built, Ansan looked vastly different from what it is today.\nIn the 1970s, as the plan to build the new Banwol industrial city moved forward, roads, industrial complexes, residential areas, and living spaces began to be drawn on paper.\nThe city, which began as lines and plans on a drawing, gradually took shape as real space, becoming the foundation of the Ansan we know today."},"zh":{"label":"中文","title":"第二部分-1. 从纸上开始","body":"在城市建成之前,安山的样貌与今天大不相同。\n20世纪70年代,随着\"半月新兴工业城市\"建设规划的推进,道路与产业园区、住宅区与生活空间开始被绘制在纸上。\n以图纸上的线条与规划为起点的这座城市,逐渐呈现出真实的空间面貌,成为今天安山的基础。"},"ja":{"label":"日本語","title":"PART 2-1. 紙の上から始まる","body":"都市がつくられる前、安山の姿は今とは大きく異なっていた。\n1970年代、半月新工業都市の建設計画が進められる中で、道路や産業団地、住宅地域や生活空間が紙の上に描かれ始めた。\n図面上の線と計画から始まったこの都市は、次第に実際の空間として姿を現し、今日の安山の基盤となった。"},"ru":{"label":"Русский","title":"Часть 2-1. Начало на бумаге","body":"До того как город был построен, облик Ансана сильно отличался от нынешнего.\nВ 1970-х годах, по мере продвижения плана строительства нового промышленного города Банволь, на бумаге начали появляться дороги, промышленные комплексы, жилые районы и общественные пространства.\nГород, начавшийся как линии и планы на чертеже, постепенно обретал реальные очертания и стал основой сегодняшнего Ансана."}}},{"id":9,"catalogNo":"09","imageUrl":"","langs":{"ko":{"label":"한국어","title":"PART 2-2. 도시를 짓다","body":"도면 위의 선들이 실제 땅 위에 놓이기 시작했다.\n땅을 다지고 도로를 내며 산업단지와 주거지가 들어섰고,\n사람들이 살아가기 위한 크고 작은 기반들도 하나씩 갖추어졌다.\n계획으로 시작된 도시는, 건설의 시간을 거쳐\n점차 삶의 공간으로 채워져 갔다."},"en":{"label":"English","title":"PART 2-2. Building the City","body":"The lines on the drawings began to be laid onto the actual ground.\nLand was leveled and roads were built, and industrial complexes and residential areas rose, while the large and small foundations needed for people's lives were put in place one by one.\nThe city that began as a plan, passing through a time of construction, gradually filled with the spaces of daily life."},"zh":{"label":"中文","title":"第二部分-2. 建造城市","body":"图纸上的线条,开始落于实际的土地之上。\n平整土地、铺设道路,产业园区与住宅区随之建成,支撑人们生活所需的大大小小的基础设施也一一具备。\n以规划起步的城市,历经建设的时光,逐渐被生活的空间所填满。"},"ja":{"label":"日本語","title":"PART 2-2. 都市を建てる","body":"図面上の線が、実際の土地の上に描かれ始めた。\n土地を整え、道路を通し、産業団地や住宅地が形づくられ、人々が暮らしていくための大小の基盤もひとつずつ整えられていった。\n計画から始まった都市は、建設の時間を経て、次第に暮らしの空間で満たされていった。"},"ru":{"label":"Русский","title":"Часть 2-2. Строительство города","body":"Линии с чертежей начали ложиться на реальную землю.\nЗемлю выравнивали, прокладывали дороги, возводили промышленные комплексы и жилые районы, и постепенно, одна за другой, появлялись большие и малые основы для жизни людей.\nГород, начавшийся как план, пройдя через время строительства, постепенно наполнялся пространством повседневной жизни."}}},{"id":10,"catalogNo":"10","imageUrl":"","langs":{"ko":{"label":"한국어","title":"PART 2-3. 도시의 시간","body":"1986년, 이름을 얻은 도시는 거기서 멈추지 않았다.\n도로와 교통망이 확장되고 새로운 생활공간이 들어서며,\n안산의 영역과 풍경은 계속해서 달라졌다.\n그 변화의 시간이 쌓여, 지금 우리가 살아가는 안산이 되었다."},"en":{"label":"English","title":"PART 2-3. The Time of the City","body":"In 1986, the city, having gained its name, did not stop there.\nAs roads and transportation networks expanded and new living spaces emerged, the territory and landscape of Ansan continued to change.\nThis accumulation of change over time became the Ansan we live in today."},"zh":{"label":"中文","title":"第二部分-3. 城市的时光","body":"1986年,获得\"市\"之名的安山并未就此止步。\n随着道路与交通网络的扩展、新的生活空间的出现,安山的范围与风貌不断发生变化。\n这些变化的时光不断累积,造就了我们今天所生活的安山。"},"ja":{"label":"日本語","title":"PART 2-3. 都市の時間","body":"1986年、名前を得た都市は、そこで止まらなかった。\n道路や交通網が拡張され、新しい生活空間が生まれる中で、安山の領域と風景は変わり続けた。\nその変化の時間が積み重なり、今私たちが暮らす安山となった。"},"ru":{"label":"Русский","title":"Часть 2-3. Время города","body":"В 1986 году город, получивший своё имя, на этом не остановился.\nПо мере расширения дорог и транспортных сетей, появления новых жилых пространств территория и облик Ансана продолжали меняться.\nЭто накопленное время перемен и стало тем Ансаном, в котором мы живём сегодня."}}},{"id":11,"catalogNo":"11","imageUrl":"","langs":{"ko":{"label":"한국어","title":"PART 2-4. 나의 도시, 나의 안산","body":"도시는 건물과 길만으로 만들어지지 않는다.\n그곳에 살아가는 사람들의 삶과 기억이 더해지며 비로소 하나의 도시가 된다.\n삶의 터전이 되어 온 집과 동네,\n가족과 친구와 함께한 평범한 일상의 순간들은\n저마다의 기억으로 남아 안산의 시간을 채워 왔다.\n도시의 역사는 곧 그곳을 살아온 사람들의 역사이다.\n그 기억이 모여 지금의 안산이 되었다."},"en":{"label":"English","title":"PART 2-4. My City, My Ansan","body":"A city is not made of buildings and roads alone.\nIt becomes a true city only when the lives and memories of the people living there are added to it.\nThe homes and neighborhoods that have served as the foundation of life, and the ordinary, everyday moments shared with family and friends, have remained as individual memories, filling the time of Ansan.\nThe history of a city is, in the end, the history of the people who lived there.\nThose memories, gathered together, have become the Ansan of today."},"zh":{"label":"中文","title":"第二部分-4. 我的城市,我的安山","body":"城市并非仅由建筑与道路构成。\n唯有加入生活于此的人们的生活与记忆,才真正成为一座城市。\n作为生活根基的家与街坊,与家人朋友共度的平凡日常瞬间,都化作各自的记忆,填满了安山的时光。\n城市的历史,正是生活于此的人们的历史。\n这些记忆汇聚在一起,成就了今天的安山。"},"ja":{"label":"日本語","title":"PART 2-4. 私の都市、私の安山","body":"都市は建物と道だけでつくられるのではない。\nそこに生きる人々の暮らしと記憶が加わって、初めてひとつの都市となる。\n暮らしの拠り所となってきた家や町、家族や友人と過ごした何気ない日常の瞬間は、それぞれの記憶として残り、安山の時間を満たしてきた。\n都市の歴史とは、すなわちそこで生きてきた人々の歴史である。\nその記憶が集まり、今の安山となった。"},"ru":{"label":"Русский","title":"Часть 2-4. Мой город, мой Ансан","body":"Город создаётся не только зданиями и дорогами.\nОн становится настоящим городом лишь тогда, когда к нему добавляются жизнь и память живущих в нём людей.\nДома и кварталы, ставшие основой жизни, обычные повседневные моменты, прожитые с семьёй и друзьями, остались личными воспоминаниями, наполнившими собой время Ансана.\nИстория города — это, в конечном счёте, история людей, живших в нём.\nЭти воспоминания, собравшись вместе, стали сегодняшним Ансаном."}}},{"id":12,"catalogNo":"12","imageUrl":"","langs":{"ko":{"label":"한국어","title":"안산이 건네는 인사","body":"사진 속에 멈춰 있던 안산의 시간이 다시 움직인다.\n거리에서, 동네에서, 가족과 친구들과 함께했던 평범한 순간들.\n그 시절 안산의 풍경과 그 안을 살아가던 사람들이\n오늘의 우리를 향해 손을 흔든다.\n그때의 안산과 지금의 우리가, 사진 한 장을 사이에 두고 잠시 마주한다.\n시간을 건너, 40년 전 안산이 지금의 우리에게 인사를 건넨다."},"en":{"label":"English","title":"A Greeting from Ansan","body":"The time of Ansan, once frozen in photographs, begins to move again.\nOrdinary moments spent on the streets, in the neighborhoods, with family and friends.\nThe scenery of Ansan from that era, and the people who lived within it, wave their hands toward us today.\nThe Ansan of back then and the us of now meet briefly, separated only by a single photograph.\nCrossing time, the Ansan of 40 years ago reaches out to greet us now."},"zh":{"label":"中文","title":"安山递来的问候","body":"曾定格在照片中的安山时光,再次流动起来。\n街头巷尾,与家人朋友共度的平凡瞬间。\n那个年代安山的风景,以及生活于其中的人们,正向今天的我们挥手致意。\n那时的安山与此刻的我们,隔着一张照片短暂相遇。\n跨越时间,四十年前的安山,向今天的我们送上问候。"},"ja":{"label":"日本語","title":"安山からの挨拶","body":"写真の中で止まっていた安山の時間が、再び動き出す。\n街で、町で、家族や友人と過ごした何気ない瞬間。\nあの頃の安山の風景と、その中で生きていた人々が、今日の私たちに向かって手を振る。\nあの時の安山と今の私たちが、一枚の写真を挟んでしばし向き合う。\n時を越えて、40年前の安山が、今の私たちに挨拶を送る。"},"ru":{"label":"Русский","title":"Приветствие от Ансана","body":"Время Ансана, застывшее на фотографиях, снова приходит в движение.\nОбычные моменты на улицах, в кварталах, рядом с семьёй и друзьями.\nПейзажи тогдашнего Ансана и люди, жившие в нём, машут нам, сегодняшним, рукой.\nТогдашний Ансан и мы сегодняшние на мгновение встречаемся, разделённые лишь одной фотографией.\nПересекая время, Ансан сорокалетней давности приветствует нас, сегодняшних."}}},{"id":13,"catalogNo":"13","imageUrl":"","langs":{"ko":{"label":"한국어","title":"즐거운 나의 집, 안산","body":"1986년, 새로운 도시 안산에 사람들이 모여들고\n수많은 집에 저마다의 삶이 자리 잡기 시작했다.\n텔레비전과 라디오, 전화기와 같은 전자제품은\n집 안의 풍경을 바꾸고 일상에 새로운 편리함과 즐거움을 더했다.\n새로 지어진 집에는 낯선 물건들이 하나둘 채워지고,\n그 안에서 사람들의 하루와 도시의 시간이 함께 흘러갔다.\n그로부터 40년.\n일상을 함께했던 전자제품은 새로운 기술과 모습으로 바뀌었고,\n한때 새로운 삶의 터전이었던 집과 도시 역시 변화의 시간을 지나고 있다.\n물건이 바뀌고, 집이 변하고, 도시가 다시 만들어지는 동안에도\n그 안에는 언제나 사람들의 삶이 있었다.\n1986년에서 2026년까지,\n우리가 살아온 집의 풍경 속에 안산의 40년이 쌓여 있다."},"en":{"label":"English","title":"My Happy Home, Ansan","body":"In 1986, people gathered in the new city of Ansan, and in countless homes, individual lives began to take root.\nElectronic products such as televisions, radios, and telephones changed the scenery inside the home, adding new convenience and enjoyment to daily life.\nNewly built homes were filled, one by one, with unfamiliar objects, and within them, people's days and the city's time flowed on together.\nForty years have passed since then.\nThe electronic products that shared our daily lives have changed into new technologies and forms, and the homes and city that once served as a new foundation for life are likewise passing through a time of change.\nEven as objects changed, homes changed, and the city was remade, the lives of people were always present within them.\nFrom 1986 to 2026, the 40 years of Ansan are layered within the scenery of the homes we have lived in."},"zh":{"label":"中文","title":"我快乐的家,安山","body":"1986年,人们聚集到新兴城市安山,在无数个家中,各自的生活开始扎根。\n电视机、收音机、电话等电子产品改变了家中的景象,为日常生活增添了新的便利与快乐。\n新建的住宅里,陌生的物件一件件被填满,人们的每一天与城市的时光,也在其中一同流淌。\n从那时起,四十年过去了。\n曾陪伴日常的电子产品已换上新的技术与面貌,曾是崭新生活根基的家与城市,也正经历着变化的时光。\n即便物品在更新,住宅在变化,城市在被重新塑造,其中始终都有人们的生活。\n从1986年到2026年,我们生活过的家的风景中,积淀着安山的四十年。"},"ja":{"label":"日本語","title":"楽しいわが家、安山","body":"1986年、新しい都市・安山に人々が集まり、数多くの家にそれぞれの暮らしが根を下ろし始めた。\nテレビやラジオ、電話などの電子製品は家の中の風景を変え、日常に新しい便利さと楽しみを加えた。\n新しく建てられた家には見慣れない品々が一つ、また一つと満たされ、その中で人々の一日と都市の時間がともに流れていった。\nそれから40年。\n日常をともにしてきた電子製品は新しい技術と姿へと変わり、かつて新しい暮らしの拠点であった家と都市もまた、変化の時間を経ている。\n物が変わり、家が変わり、都市がつくり直される間も、その中にはいつも人々の暮らしがあった。\n1986年から2026年まで、私たちが暮らしてきた家の風景の中に、安山の40年が積み重なっている。"},"ru":{"label":"Русский","title":"Мой уютный дом, Ансан","body":"В 1986 году люди собрались в новом городе Ансане, и в бесчисленных домах начала укореняться жизнь каждого.\nЭлектронные приборы — телевизоры, радио, телефоны — изменили облик дома изнутри, добавив повседневной жизни новое удобство и радость.\nВо вновь построенных домах один за другим появлялись незнакомые прежде вещи, и вместе с ними текли дни людей и время города.\nС тех пор прошло 40 лет.\nЭлектронные приборы, сопровождавшие повседневность, сменились новыми технологиями и обликом, а дома и город, некогда бывшие новой основой жизни, тоже проходят через время перемен.\nПока менялись вещи, менялись дома, заново создавался город, внутри них всегда была жизнь людей.\nС 1986 по 2026 год в пейзаже домов, где мы жили, накопились 40 лет истории Ансана."}}}]}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script id="app-logic">
+(function(){
+  "use strict";
+  var STATE = JSON.parse(document.getElementById('state-json').textContent);
+  if (!STATE.meta.languages) STATE.meta.languages = [["ko","한국어"],["en","English"],["ja","日本語"],["zh","中文"]];
+  reconcileLanguages();
+  var adminMode = false;
+  var writeDisabled = false;
+  var detailLangChoice = {};
+  var editing = null;
+  var artifactCap = null;
+  var sampleCap = null;
+
+  if (typeof claude !== 'undefined' && claude && claude.use) {
+    claude.use('artifact').then(function(c){ artifactCap = c; }).catch(function(){});
+    claude.use('sample').then(function(c){ sampleCap = c; }).catch(function(){});
+  }
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function qrUrl(id){
+    return location.origin + location.pathname + '#/exhibit/' + id;
+  }
+  function findExhibit(id){
+    id = Number(id);
+    for (var i=0;i<STATE.exhibits.length;i++) if (STATE.exhibits[i].id === id) return STATE.exhibits[i];
+    return null;
+  }
+  function langList(ex){
+    return Object.keys(ex.langs);
+  }
+  function primaryLang(ex){
+    var keys = langList(ex);
+    if (keys.indexOf('ko') !== -1) return 'ko';
+    return keys[0];
+  }
+  function reconcileLanguages(){
+    STATE.meta.languages.forEach(function(pair){
+      STATE.exhibits.forEach(function(ex){
+        if (!ex.langs[pair[0]]) ex.langs[pair[0]] = {label: pair[1], title:'', body:''};
+      });
+    });
+  }
+  function addLanguageGlobally(code, label){
+    if (!/^[a-zA-Z0-9_-]{1,12}$/.test(code)){ toast('언어 코드는 영문/숫자로 12자 이내로 입력해 주세요.'); return false; }
+    if (STATE.meta.languages.some(function(p){ return p[0] === code; })){ toast('이미 존재하는 언어 코드입니다.'); return false; }
+    if (!label){ toast('언어 이름을 입력해 주세요.'); return false; }
+    STATE.meta.languages.push([code, label]);
+    STATE.exhibits.forEach(function(ex){ ex.langs[code] = {label: label, title:'', body:''}; });
+    return true;
+  }
+  function removeLanguageGlobally(code){
+    if (STATE.meta.languages.length <= 1){ toast('언어는 최소 1개 이상 있어야 합니다.'); return false; }
+    STATE.meta.languages = STATE.meta.languages.filter(function(p){ return p[0] !== code; });
+    STATE.exhibits.forEach(function(ex){ delete ex.langs[code]; });
+    return true;
+  }
+
+  function buildDocument(state){
+    var stateJson = JSON.stringify(state).replace(/</g, '\\u003c');
+    var head = [
+      '<meta charset="UTF-8">',
+      '<meta name="viewport" content="width=device-width, initial-scale=1">',
+      '<title>디지털 도슨트</title>',
+      document.getElementById('font-link').outerHTML,
+      document.getElementById('app-style').outerHTML
+    ].join('\n');
+    var body = [
+      '<div id="app"></div>',
+      '<script id="state-json" type="application/json">' + stateJson + '<' + '/script>',
+      document.querySelector('script[src*="qrcodejs"]').outerHTML,
+      document.getElementById('app-logic').outerHTML
+    ].join('\n');
+    return '<!doctype html>\n<html lang="ko">\n<head>\n' + head + '\n</head>\n<body>\n' + body + '\n</body>\n</html>';
+  }
+
+  function toast(msg){
+    var el = document.createElement('div');
+    el.className = 'toast';
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(function(){ el.remove(); }, 3200);
+  }
+
+  function persist(after){
+    if (writeDisabled){ toast('이 페이지는 소유자만 저장할 수 있어요.'); return; }
+    if (!artifactCap){ toast('저장 기능을 사용할 수 없는 환경입니다.'); return; }
+    STATE.isSample = false;
+    var html = buildDocument(STATE);
+    artifactCap.publish(html).then(function(){
+      if (after) after();
+    }).catch(function(err){
+      var code = err && err.code;
+      if (code === 'not_writer' || code === 'not_granted'){
+        writeDisabled = true;
+        adminMode = false;
+        toast('이 페이지는 소유자만 편집할 수 있습니다. 보기 전용으로 전환합니다.');
+        render();
+      } else if (code === 'conflict'){
+        toast('다른 곳에서 방금 저장되어 화면을 새로고침합니다.');
+      } else {
+        toast('저장에 실패했습니다: ' + (err && err.message ? err.message : code));
+      }
+    });
+  }
+
+  function resizeImageFile(file, maxDim, quality, callback){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      var img = new Image();
+      img.onload = function(){
+        var scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        var cw = Math.max(1, Math.round(img.width * scale));
+        var ch = Math.max(1, Math.round(img.height * scale));
+        var canvas = document.createElement('canvas');
+        canvas.width = cw; canvas.height = ch;
+        canvas.getContext('2d').drawImage(img, 0, 0, cw, ch);
+        callback(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = function(){ callback(null); };
+      img.src = e.target.result;
+    };
+    reader.onerror = function(){ callback(null); };
+    reader.readAsDataURL(file);
+  }
+
+  function renderQrInto(container, url, size){
+    container.innerHTML = '';
+    new QRCode(container, {
+      text: url, width: size, height: size,
+      colorDark: '#1A1A1A', colorLight: '#FFFFFF',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  }
+
+  function route(){
+    var hash = location.hash || '';
+    var m = hash.match(/^#\/exhibit\/(.+)$/);
+    if (m) renderDetail(m[1]);
+    else renderGallery();
+  }
+
+  function headerHtml(){
+    var editableAttr = adminMode ? ' contenteditable="true"' : '';
+    return (
+      '<header class="site-header">' +
+        '<div>' +
+          '<h1 class="hall-name" id="hall-name-el"' + editableAttr + '>' + esc(STATE.meta.hallName) + '</h1>' +
+          '<p class="subtitle" id="hall-subtitle-el"' + editableAttr + '>' + esc(STATE.meta.subtitle) + '</p>' +
+        '</div>' +
+        '<div class="header-actions">' +
+          (adminMode ? '<button class="btn" id="lang-manager-btn">언어 관리</button>' : '') +
+          '<button class="btn" id="admin-toggle-btn">' + (adminMode ? '관리자 모드 끄기' : '관리자 모드') + '</button>' +
+        '</div>' +
+      '</header>'
+    );
+  }
+
+  function renderGallery(){
+    var app = document.getElementById('app');
+    var html = headerHtml();
+
+    if (STATE.isSample){
+      html += '<div class="notice"><span>샘플 전시품이 표시되고 있습니다. 관리자 모드에서 실제 전시 정보로 교체해 주세요.</span>' +
+        '<button id="dismiss-sample">숨기기</button></div>';
+    }
+
+    if (STATE.exhibits.length === 0){
+      html += '<div class="empty-state">등록된 전시품이 없습니다. 관리자 모드를 켜고 전시품을 추가해 보세요.</div>';
+    } else {
+      html += '<div class="gallery-grid" id="gallery-grid">';
+      STATE.exhibits.forEach(function(ex){
+        var lang = ex.langs[primaryLang(ex)] || {title:'(제목 없음)'};
+        var langs = langList(ex).map(function(k){ return ex.langs[k].label; }).join(' · ');
+        html += (
+          '<article class="card">' +
+            '<span class="catalog-tag">' + esc(ex.catalogNo || '') + '</span>' +
+            '<div class="card-body-row">' +
+              '<span class="qr-chip" data-qr-id="' + ex.id + '"></span>' +
+              '<div class="card-links">' +
+                '<h2 class="card-title">' + esc(lang.title) + '</h2>' +
+                '<a href="#/exhibit/' + ex.id + '">전시 안내 보기 →</a>' +
+                '<span class="card-langs">' + esc(langs) + '</span>' +
+              '</div>' +
+            '</div>' +
+            (adminMode ? (
+              '<div class="card-actions">' +
+                '<button class="btn btn-sm" data-edit="' + ex.id + '">수정</button>' +
+                '<button class="btn btn-sm" data-print="' + ex.id + '">QR 인쇄</button>' +
+                '<button class="btn btn-sm btn-danger" data-delete="' + ex.id + '">삭제</button>' +
+              '</div>'
+            ) : '') +
+          '</article>'
+        );
+      });
+      html += '</div>';
+    }
+
+    app.innerHTML = html;
+
+    if (adminMode){
+      var grid = document.getElementById('gallery-grid');
+      if (!grid){
+        grid = document.createElement('div');
+        grid.className = 'gallery-grid';
+        app.appendChild(grid);
+      }
+      var addBtn = document.createElement('button');
+      addBtn.className = 'add-card';
+      addBtn.id = 'add-exhibit-btn';
+      addBtn.textContent = '+ 전시품 추가';
+      grid.appendChild(addBtn);
+    }
+
+    STATE.exhibits.forEach(function(ex){
+      var chip = app.querySelector('[data-qr-id="' + ex.id + '"]');
+      if (chip) renderQrInto(chip, qrUrl(ex.id), 84);
+    });
+
+    var toggle = document.getElementById('admin-toggle-btn');
+    if (toggle) toggle.addEventListener('click', function(){
+      adminMode = !adminMode;
+      render();
+    });
+    var dismiss = document.getElementById('dismiss-sample');
+    if (dismiss) dismiss.addEventListener('click', function(){
+      STATE.isSample = false;
+      render();
+    });
+    if (adminMode){
+      var hn = document.getElementById('hall-name-el');
+      var hs = document.getElementById('hall-subtitle-el');
+      if (hn) hn.addEventListener('blur', function(){
+        var v = hn.textContent.trim();
+        if (v && v !== STATE.meta.hallName){ STATE.meta.hallName = v; persist(); }
+      });
+      if (hs) hs.addEventListener('blur', function(){
+        var v = hs.textContent.trim();
+        if (v && v !== STATE.meta.subtitle){ STATE.meta.subtitle = v; persist(); }
+      });
+      var addExhibitBtn = document.getElementById('add-exhibit-btn');
+      if (addExhibitBtn) addExhibitBtn.addEventListener('click', openAddModal);
+      var langBtn = document.getElementById('lang-manager-btn');
+      if (langBtn) langBtn.addEventListener('click', openLanguageManagerModal);
+      app.querySelectorAll('[data-edit]').forEach(function(b){
+        b.addEventListener('click', function(){ openEditModal(Number(b.getAttribute('data-edit'))); });
+      });
+      app.querySelectorAll('[data-delete]').forEach(function(b){
+        b.addEventListener('click', function(){ confirmDelete(Number(b.getAttribute('data-delete'))); });
+      });
+      app.querySelectorAll('[data-print]').forEach(function(b){
+        b.addEventListener('click', function(){ openPrintModal(Number(b.getAttribute('data-print'))); });
+      });
+    }
+  }
+
+  function renderDetail(idStr){
+    var app = document.getElementById('app');
+    var ex = findExhibit(idStr);
+    if (!ex){
+      app.innerHTML = headerHtml() + '<div class="empty-state">전시품을 찾을 수 없습니다. <a href="#/">전체 목록으로 돌아가기</a></div>';
+      wireHeaderOnly();
+      return;
+    }
+    var keys = langList(ex);
+    var current = detailLangChoice[ex.id] && ex.langs[detailLangChoice[ex.id]] ? detailLangChoice[ex.id] : primaryLang(ex);
+    var lang = ex.langs[current];
+
+    var html = headerHtml();
+    html += '<div class="detail-wrap">';
+    html += '<a class="back-link" href="#/">← 전체 목록으로</a>';
+    html += '<div class="lang-tabs" role="tablist">';
+    keys.forEach(function(k){
+      html += '<button class="lang-tab" role="tab" aria-selected="' + (k === current ? 'true' : 'false') + '" data-lang="' + esc(k) + '">' + esc(ex.langs[k].label) + '</button>';
+    });
+    html += '</div>';
+    if (ex.catalogNo) html += '<div class="exhibit-meta">' + esc(ex.catalogNo) + '</div>';
+    html += '<h1 class="exhibit-title">' + esc(lang.title || '(제목 없음)') + '</h1>';
+    if (ex.imageUrl) html += '<img class="exhibit-image" src="' + esc(ex.imageUrl) + '" alt="">';
+    html += '<p class="exhibit-body">' + esc(lang.body || '') + '</p>';
+    html += '<div class="detail-qr-row"><span class="qr-chip" id="detail-qr"></span><span class="detail-qr-caption">이 QR은 이 전시품 안내로 바로 연결됩니다.</span></div>';
+    html += '</div>';
+
+    app.innerHTML = html;
+    var qrEl = document.getElementById('detail-qr');
+    if (qrEl) renderQrInto(qrEl, qrUrl(ex.id), 76);
+
+    app.querySelectorAll('[data-lang]').forEach(function(b){
+      b.addEventListener('click', function(){
+        detailLangChoice[ex.id] = b.getAttribute('data-lang');
+        renderDetail(ex.id);
+      });
+    });
+    wireHeaderOnly();
+  }
+
+  function wireHeaderOnly(){
+    var toggle = document.getElementById('admin-toggle-btn');
+    if (toggle) toggle.addEventListener('click', function(){
+      adminMode = !adminMode;
+      location.hash = '#/';
+    });
+    var langBtn = document.getElementById('lang-manager-btn');
+    if (langBtn) langBtn.addEventListener('click', openLanguageManagerModal);
+  }
+
+  // ---- Edit modal ----
+  function closeModal(){
+    var b = document.querySelector('.modal-backdrop');
+    if (b) b.remove();
+  }
+
+  function openAddModal(){
+    var ex = {
+      id: STATE.nextId++,
+      catalogNo: '',
+      imageUrl: '',
+      langs: {}
+    };
+    STATE.meta.languages.forEach(function(pair){ ex.langs[pair[0]] = {label: pair[1], title:'', body:''}; });
+    editing = {exhibit: ex, isNew: true, activeLang: primaryLang(ex)};
+    renderEditModal();
+  }
+  function openEditModal(id){
+    var ex = findExhibit(id);
+    if (!ex) return;
+    editing = {exhibit: JSON.parse(JSON.stringify(ex)), isNew:false, activeLang: primaryLang(ex)};
+    renderEditModal();
+  }
+
+  function renderEditModal(){
+    closeModal();
+    var ex = editing.exhibit;
+    var keys = langList(ex);
+    var backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    var cur = ex.langs[editing.activeLang] || {title:'',body:''};
+    backdrop.innerHTML =
+      '<div class="modal" role="dialog" aria-modal="true">' +
+        '<h2>' + (editing.isNew ? '전시품 추가' : '전시품 수정') + '</h2>' +
+        '<div class="field"><label for="f-catalog">전시(소장품) 번호</label>' +
+          '<input type="text" id="f-catalog" value="' + esc(ex.catalogNo) + '" placeholder="예: 2F-03"></div>' +
+        '<div class="field"><label>사진 (선택)</label>' +
+          '<div class="image-field-row">' +
+            (ex.imageUrl ?
+              '<img class="image-preview" id="image-preview" src="' + esc(ex.imageUrl) + '" alt="">' :
+              '<span class="image-preview-empty" id="image-preview">사진 없음</span>') +
+            '<div class="image-field-actions">' +
+              '<input type="file" id="f-image-file" accept="image/*" style="display:none">' +
+              '<button type="button" class="btn btn-sm" id="choose-image-btn">사진 선택</button>' +
+              (ex.imageUrl ? '<button type="button" class="btn btn-sm btn-ghost" id="remove-image-btn">삭제</button>' : '') +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="hairline" style="margin:1.2rem 0;"></div>' +
+        '<div class="edit-lang-tabs" id="edit-lang-tabs">' +
+          keys.map(function(k){
+            return '<button class="edit-lang-tab" aria-selected="' + (k===editing.activeLang?'true':'false') + '" data-lang="' + esc(k) + '">' + esc(ex.langs[k].label) + '</button>';
+          }).join('') +
+        '</div>' +
+        '<div class="ai-row" id="ai-row"></div>' +
+        '<div class="field"><label for="f-title">제목 (' + esc(cur.label || editing.activeLang) + ')</label>' +
+          '<input type="text" id="f-title" value="' + esc(cur.title) + '"></div>' +
+        '<div class="field"><label for="f-body">설명 (' + esc(cur.label || editing.activeLang) + ')</label>' +
+          '<textarea id="f-body">' + esc(cur.body) + '</textarea></div>' +
+        '<p class="helper-text">언어 자체를 추가하거나 삭제하려면 전체 목록 화면의 "언어 관리"를 이용하세요. 여기서는 각 언어의 제목·설명만 입력합니다.</p>' +
+        '<p class="helper-text">QR코드는 저장 후 자동으로 생성되어 이 전시품 카드에 표시됩니다.</p>' +
+        '<div class="modal-actions">' +
+          '<button class="btn btn-ghost" id="cancel-edit-btn">취소</button>' +
+          '<div class="right">' +
+            (editing.isNew ? '' : '<button class="btn btn-danger" id="delete-from-modal-btn">삭제</button>') +
+            '<button class="btn btn-primary" id="save-edit-btn">저장</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(backdrop);
+
+    function syncFieldsToState(){
+      ex.catalogNo = document.getElementById('f-catalog').value.trim();
+      var t = document.getElementById('f-title');
+      var b = document.getElementById('f-body');
+      if (t && b) ex.langs[editing.activeLang].title = t.value;
+      if (t && b) ex.langs[editing.activeLang].body = b.value;
+    }
+
+    document.getElementById('choose-image-btn').addEventListener('click', function(){
+      document.getElementById('f-image-file').click();
+    });
+    document.getElementById('f-image-file').addEventListener('change', function(e){
+      var file = e.target.files[0];
+      if (!file) return;
+      if (!/^image\//.test(file.type)){ toast('이미지 파일만 선택할 수 있습니다.'); return; }
+      if (file.size > 8 * 1024 * 1024){ toast('이미지 파일은 8MB 이하로 선택해 주세요.'); return; }
+      resizeImageFile(file, 1200, 0.82, function(dataUrl){
+        if (!dataUrl){ toast('이미지를 불러오지 못했습니다. 다른 파일을 시도해 주세요.'); return; }
+        syncFieldsToState();
+        ex.imageUrl = dataUrl;
+        renderEditModal();
+      });
+    });
+    var removeImageBtn = document.getElementById('remove-image-btn');
+    if (removeImageBtn) removeImageBtn.addEventListener('click', function(){
+      syncFieldsToState();
+      ex.imageUrl = '';
+      renderEditModal();
+    });
+
+    backdrop.querySelectorAll('[data-lang]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        syncFieldsToState();
+        editing.activeLang = btn.getAttribute('data-lang');
+        renderEditModal();
+      });
+    });
+    document.getElementById('cancel-edit-btn').addEventListener('click', function(){
+      editing = null; closeModal();
+    });
+    document.getElementById('save-edit-btn').addEventListener('click', function(){
+      syncFieldsToState();
+      if (!ex.catalogNo){ toast('전시(소장품) 번호를 입력해 주세요.'); return; }
+      var hasTitle = Object.keys(ex.langs).some(function(k){ return ex.langs[k].title.trim(); });
+      if (!hasTitle){ toast('최소 한 언어의 제목을 입력해 주세요.'); return; }
+      if (editing.isNew){
+        STATE.exhibits.push(ex);
+      } else {
+        var idx = STATE.exhibits.findIndex(function(e){ return e.id === ex.id; });
+        STATE.exhibits[idx] = ex;
+      }
+      editing = null;
+      closeModal();
+      persist(render);
+    });
+    var delBtn = document.getElementById('delete-from-modal-btn');
+    if (delBtn) delBtn.addEventListener('click', function(){
+      closeModal();
+      editing = null;
+      confirmDelete(ex.id);
+    });
+
+    renderAiRow();
+  }
+
+  function renderAiRow(){
+    var row = document.getElementById('ai-row');
+    if (!row) return;
+    row.innerHTML = '';
+    if (!sampleCap) return;
+    if (editing.activeLang === 'ko') return;
+    var ex = editing.exhibit;
+    var koLang = ex.langs.ko;
+    if (!koLang || !koLang.title.trim()) return;
+    var btn = document.createElement('button');
+    btn.className = 'ai-btn';
+    btn.textContent = 'AI 번역 제안 받기';
+    btn.addEventListener('click', function(){
+      btn.disabled = true;
+      btn.textContent = '번역 중...';
+      var targetLabel = ex.langs[editing.activeLang].label;
+      var prompt = '다음은 박물관 전시품 안내판의 한국어 원문입니다. 이것을 ' + targetLabel +
+        '로 자연스럽고 간결한 전시 안내판 문체로 번역해 주세요.\n제목: ' + koLang.title +
+        '\n설명: ' + koLang.body +
+        '\n\n반드시 이 형식으로만 답하세요 (다른 말 없이):\n제목: <번역된 제목>\n설명: <번역된 설명>';
+      sampleCap(prompt, {modelTier:'quick'}).then(function(res){
+        var text = res.text || '';
+        var titleMatch = text.match(/제목\s*[:：]\s*([^\n]+)/);
+        var bodyMatch = text.match(/설명\s*[:：]\s*([\s\S]+)/);
+        var tEl = document.getElementById('f-title');
+        var bEl = document.getElementById('f-body');
+        if (titleMatch && tEl) tEl.value = titleMatch[1].trim();
+        if (bodyMatch && bEl) bEl.value = bodyMatch[1].trim();
+        if (!titleMatch && !bodyMatch && tEl && bEl){ bEl.value = text.trim(); }
+        btn.disabled = false;
+        btn.textContent = '다시 번역 받기';
+      }).catch(function(err){
+        var code = err && err.code;
+        if (code === 'not_granted'){ row.innerHTML = ''; return; }
+        toast('AI 번역을 가져오지 못했습니다.');
+        btn.disabled = false;
+        btn.textContent = 'AI 번역 제안 받기';
+      });
+    });
+    row.appendChild(btn);
+  }
+
+  function openLanguageManagerModal(){
+    closeModal();
+    var backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    document.body.appendChild(backdrop);
+    renderLanguageManagerInto(backdrop);
+  }
+
+  function renderLanguageManagerInto(backdrop){
+    var rows = STATE.meta.languages.map(function(pair){
+      var count = STATE.exhibits.filter(function(ex){ return ex.langs[pair[0]] && ex.langs[pair[0]].title.trim(); }).length;
+      return (
+        '<div class="lang-manage-row">' +
+          '<span class="lang-manage-code">' + esc(pair[0]) + '</span>' +
+          '<span class="lang-manage-label">' + esc(pair[1]) + '</span>' +
+          '<span class="lang-manage-count">' + count + ' / ' + STATE.exhibits.length + '개 전시품에 작성됨</span>' +
+          '<button class="btn btn-sm btn-danger" data-remove-lang="' + esc(pair[0]) + '"' + (STATE.meta.languages.length <= 1 ? ' disabled' : '') + '>삭제</button>' +
+        '</div>'
+      );
+    }).join('');
+    backdrop.innerHTML =
+      '<div class="modal" role="dialog" aria-modal="true">' +
+        '<h2>언어 관리</h2>' +
+        '<p class="helper-text">여기서 추가하거나 삭제하는 언어는 전시품 전체에 한 번에 적용됩니다.</p>' +
+        '<div class="lang-manage-list">' + rows + '</div>' +
+        '<div class="hairline" style="margin:1.2rem 0;"></div>' +
+        '<div class="add-lang-row">' +
+          '<div class="field"><label for="f-newlang-code">언어 코드</label><input type="text" id="f-newlang-code" placeholder="예: ru"></div>' +
+          '<div class="field"><label for="f-newlang-label">언어 이름</label><input type="text" id="f-newlang-label" placeholder="예: Русский"></div>' +
+          '<button class="btn btn-primary btn-sm" id="add-lang-global-btn">모든 전시품에 추가</button>' +
+        '</div>' +
+        '<div class="modal-actions"><span></span><button class="btn btn-ghost" id="close-lang-manager">닫기</button></div>' +
+      '</div>';
+    document.getElementById('close-lang-manager').addEventListener('click', closeModal);
+    backdrop.querySelectorAll('[data-remove-lang]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var code = b.getAttribute('data-remove-lang');
+        var pair = STATE.meta.languages.find(function(p){ return p[0] === code; });
+        var confirmBackdrop = document.createElement('div');
+        confirmBackdrop.className = 'modal-backdrop';
+        confirmBackdrop.innerHTML =
+          '<div class="modal">' +
+            '<h2>언어 삭제</h2>' +
+            '<p>"' + esc(pair[1]) + '" 언어를 모든 전시품에서 삭제할까요? 해당 언어로 작성된 내용도 함께 삭제되며 되돌릴 수 없습니다.</p>' +
+            '<div class="modal-actions"><button class="btn btn-ghost" id="cancel-remove-lang">취소</button>' +
+            '<button class="btn btn-danger" id="confirm-remove-lang">삭제</button></div>' +
+          '</div>';
+        document.body.appendChild(confirmBackdrop);
+        document.getElementById('cancel-remove-lang').addEventListener('click', function(){ confirmBackdrop.remove(); });
+        document.getElementById('confirm-remove-lang').addEventListener('click', function(){
+          confirmBackdrop.remove();
+          if (removeLanguageGlobally(code)) persist(function(){ renderLanguageManagerInto(backdrop); render(); });
+        });
+      });
+    });
+    document.getElementById('add-lang-global-btn').addEventListener('click', function(){
+      var code = document.getElementById('f-newlang-code').value.trim();
+      var label = document.getElementById('f-newlang-label').value.trim();
+      if (addLanguageGlobally(code, label)) persist(function(){ renderLanguageManagerInto(backdrop); render(); });
+    });
+  }
+
+  function confirmDelete(id){
+    var ex = findExhibit(id);
+    if (!ex) return;
+    var backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.innerHTML =
+      '<div class="modal">' +
+        '<h2>전시품 삭제</h2>' +
+        '<p>"' + esc((ex.langs[primaryLang(ex)]||{}).title || ex.catalogNo) + '"을(를) 삭제할까요? 이 작업은 되돌릴 수 없습니다.</p>' +
+        '<div class="modal-actions"><button class="btn btn-ghost" id="cancel-del">취소</button>' +
+        '<button class="btn btn-danger" id="confirm-del">삭제</button></div>' +
+      '</div>';
+    document.body.appendChild(backdrop);
+    document.getElementById('cancel-del').addEventListener('click', closeModal);
+    document.getElementById('confirm-del').addEventListener('click', function(){
+      STATE.exhibits = STATE.exhibits.filter(function(e){ return e.id !== id; });
+      closeModal();
+      persist(render);
+    });
+  }
+
+  function openPrintModal(id){
+    var ex = findExhibit(id);
+    if (!ex) return;
+    var lang = ex.langs[primaryLang(ex)];
+    var backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.innerHTML =
+      '<div class="modal qr-modal-body">' +
+        '<h2 style="align-self:flex-start;">QR 라벨 인쇄</h2>' +
+        '<span class="catalog-tag">' + esc(ex.catalogNo) + '</span>' +
+        '<h3 class="exhibit-title" style="font-size:1.3rem;">' + esc(lang.title) + '</h3>' +
+        '<span class="qr-chip" id="print-qr-preview" style="padding:1rem;"></span>' +
+        '<div class="modal-actions" style="width:100%;">' +
+          '<button class="btn btn-ghost" id="cancel-print">닫기</button>' +
+          '<button class="btn btn-primary" id="do-print">인쇄하기</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(backdrop);
+    renderQrInto(document.getElementById('print-qr-preview'), qrUrl(ex.id), 200);
+    document.getElementById('cancel-print').addEventListener('click', closeModal);
+    document.getElementById('do-print').addEventListener('click', function(){
+      var printEl = document.getElementById('print-label');
+      printEl.innerHTML =
+        '<span class="catalog-tag">' + esc(ex.catalogNo) + '</span>' +
+        '<h2 class="exhibit-title">' + esc(lang.title) + '</h2>' +
+        '<span class="qr-chip" id="print-qr-final"></span>' +
+        '<span class="detail-qr-caption">' + esc(qrUrl(ex.id)) + '</span>';
+      renderQrInto(document.getElementById('print-qr-final'), qrUrl(ex.id), 220);
+      window.print();
+    });
+  }
+
+  function render(){ route(); }
+
+  if (!document.getElementById('print-label')){
+    var pl = document.createElement('div');
+    pl.id = 'print-label';
+    document.body.appendChild(pl);
+  }
+
+  window.addEventListener('hashchange', render);
+  render();
+})();
+</script>
+</body>
+</html>
