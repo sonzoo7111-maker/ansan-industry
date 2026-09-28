@@ -200,19 +200,6 @@ a{color:var(--celadon);}
 (function(){
   "use strict";
   var STATE = JSON.parse(document.getElementById('state-json').textContent);
-  if (!STATE.meta.languages) STATE.meta.languages = [["ko","한국어"],["en","English"],["ja","日本語"],["zh","中文"]];
-  reconcileLanguages();
-  var adminMode = false;
-  var writeDisabled = false;
-  var detailLangChoice = {};
-  var editing = null;
-  var artifactCap = null;
-  var sampleCap = null;
-
-  if (typeof claude !== 'undefined' && claude && claude.use) {
-    claude.use('artifact').then(function(c){ artifactCap = c; }).catch(function(){});
-    claude.use('sample').then(function(c){ sampleCap = c; }).catch(function(){});
-  }
 
   function esc(s){
     return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
@@ -235,95 +222,6 @@ a{color:var(--celadon);}
     if (keys.indexOf('ko') !== -1) return 'ko';
     return keys[0];
   }
-  function reconcileLanguages(){
-    STATE.meta.languages.forEach(function(pair){
-      STATE.exhibits.forEach(function(ex){
-        if (!ex.langs[pair[0]]) ex.langs[pair[0]] = {label: pair[1], title:'', body:''};
-      });
-    });
-  }
-  function addLanguageGlobally(code, label){
-    if (!/^[a-zA-Z0-9_-]{1,12}$/.test(code)){ toast('언어 코드는 영문/숫자로 12자 이내로 입력해 주세요.'); return false; }
-    if (STATE.meta.languages.some(function(p){ return p[0] === code; })){ toast('이미 존재하는 언어 코드입니다.'); return false; }
-    if (!label){ toast('언어 이름을 입력해 주세요.'); return false; }
-    STATE.meta.languages.push([code, label]);
-    STATE.exhibits.forEach(function(ex){ ex.langs[code] = {label: label, title:'', body:''}; });
-    return true;
-  }
-  function removeLanguageGlobally(code){
-    if (STATE.meta.languages.length <= 1){ toast('언어는 최소 1개 이상 있어야 합니다.'); return false; }
-    STATE.meta.languages = STATE.meta.languages.filter(function(p){ return p[0] !== code; });
-    STATE.exhibits.forEach(function(ex){ delete ex.langs[code]; });
-    return true;
-  }
-
-  function buildDocument(state){
-    var stateJson = JSON.stringify(state).replace(/</g, '\\u003c');
-    var head = [
-      '<meta charset="UTF-8">',
-      '<meta name="viewport" content="width=device-width, initial-scale=1">',
-      '<title>디지털 도슨트</title>',
-      document.getElementById('font-link').outerHTML,
-      document.getElementById('app-style').outerHTML
-    ].join('\n');
-    var body = [
-      '<div id="app"></div>',
-      '<script id="state-json" type="application/json">' + stateJson + '<' + '/script>',
-      document.querySelector('script[src*="qrcodejs"]').outerHTML,
-      document.getElementById('app-logic').outerHTML
-    ].join('\n');
-    return '<!doctype html>\n<html lang="ko">\n<head>\n' + head + '\n</head>\n<body>\n' + body + '\n</body>\n</html>';
-  }
-
-  function toast(msg){
-    var el = document.createElement('div');
-    el.className = 'toast';
-    el.textContent = msg;
-    document.body.appendChild(el);
-    setTimeout(function(){ el.remove(); }, 3200);
-  }
-
-  function persist(after){
-    if (writeDisabled){ toast('이 페이지는 소유자만 저장할 수 있어요.'); return; }
-    if (!artifactCap){ toast('저장 기능을 사용할 수 없는 환경입니다.'); return; }
-    STATE.isSample = false;
-    var html = buildDocument(STATE);
-    artifactCap.publish(html).then(function(){
-      if (after) after();
-    }).catch(function(err){
-      var code = err && err.code;
-      if (code === 'not_writer' || code === 'not_granted'){
-        writeDisabled = true;
-        adminMode = false;
-        toast('이 페이지는 소유자만 편집할 수 있습니다. 보기 전용으로 전환합니다.');
-        render();
-      } else if (code === 'conflict'){
-        toast('다른 곳에서 방금 저장되어 화면을 새로고침합니다.');
-      } else {
-        toast('저장에 실패했습니다: ' + (err && err.message ? err.message : code));
-      }
-    });
-  }
-
-  function resizeImageFile(file, maxDim, quality, callback){
-    var reader = new FileReader();
-    reader.onload = function(e){
-      var img = new Image();
-      img.onload = function(){
-        var scale = Math.min(1, maxDim / Math.max(img.width, img.height));
-        var cw = Math.max(1, Math.round(img.width * scale));
-        var ch = Math.max(1, Math.round(img.height * scale));
-        var canvas = document.createElement('canvas');
-        canvas.width = cw; canvas.height = ch;
-        canvas.getContext('2d').drawImage(img, 0, 0, cw, ch);
-        callback(canvas.toDataURL('image/jpeg', quality));
-      };
-      img.onerror = function(){ callback(null); };
-      img.src = e.target.result;
-    };
-    reader.onerror = function(){ callback(null); };
-    reader.readAsDataURL(file);
-  }
 
   function renderQrInto(container, url, size){
     container.innerHTML = '';
@@ -342,32 +240,24 @@ a{color:var(--celadon);}
   }
 
   function headerHtml(){
-    var editableAttr = adminMode ? ' contenteditable="true"' : '';
     return (
       '<header class="site-header">' +
         '<div>' +
-          '<h1 class="hall-name" id="hall-name-el"' + editableAttr + '>' + esc(STATE.meta.hallName) + '</h1>' +
-          '<p class="subtitle" id="hall-subtitle-el"' + editableAttr + '>' + esc(STATE.meta.subtitle) + '</p>' +
-        '</div>' +
-        '<div class="header-actions">' +
-          (adminMode ? '<button class="btn" id="lang-manager-btn">언어 관리</button>' : '') +
-          '<button class="btn" id="admin-toggle-btn">' + (adminMode ? '관리자 모드 끄기' : '관리자 모드') + '</button>' +
+          '<h1 class="hall-name">' + esc(STATE.meta.hallName) + '</h1>' +
+          '<p class="subtitle">' + esc(STATE.meta.subtitle) + '</p>' +
         '</div>' +
       '</header>'
     );
   }
 
+  var detailLangChoice = {};
+
   function renderGallery(){
     var app = document.getElementById('app');
     var html = headerHtml();
 
-    if (STATE.isSample){
-      html += '<div class="notice"><span>샘플 전시품이 표시되고 있습니다. 관리자 모드에서 실제 전시 정보로 교체해 주세요.</span>' +
-        '<button id="dismiss-sample">숨기기</button></div>';
-    }
-
     if (STATE.exhibits.length === 0){
-      html += '<div class="empty-state">등록된 전시품이 없습니다. 관리자 모드를 켜고 전시품을 추가해 보세요.</div>';
+      html += '<div class="empty-state">등록된 전시품이 없습니다.</div>';
     } else {
       html += '<div class="gallery-grid" id="gallery-grid">';
       STATE.exhibits.forEach(function(ex){
@@ -384,13 +274,6 @@ a{color:var(--celadon);}
                 '<span class="card-langs">' + esc(langs) + '</span>' +
               '</div>' +
             '</div>' +
-            (adminMode ? (
-              '<div class="card-actions">' +
-                '<button class="btn btn-sm" data-edit="' + ex.id + '">수정</button>' +
-                '<button class="btn btn-sm" data-print="' + ex.id + '">QR 인쇄</button>' +
-                '<button class="btn btn-sm btn-danger" data-delete="' + ex.id + '">삭제</button>' +
-              '</div>'
-            ) : '') +
           '</article>'
         );
       });
@@ -399,60 +282,10 @@ a{color:var(--celadon);}
 
     app.innerHTML = html;
 
-    if (adminMode){
-      var grid = document.getElementById('gallery-grid');
-      if (!grid){
-        grid = document.createElement('div');
-        grid.className = 'gallery-grid';
-        app.appendChild(grid);
-      }
-      var addBtn = document.createElement('button');
-      addBtn.className = 'add-card';
-      addBtn.id = 'add-exhibit-btn';
-      addBtn.textContent = '+ 전시품 추가';
-      grid.appendChild(addBtn);
-    }
-
     STATE.exhibits.forEach(function(ex){
       var chip = app.querySelector('[data-qr-id="' + ex.id + '"]');
       if (chip) renderQrInto(chip, qrUrl(ex.id), 84);
     });
-
-    var toggle = document.getElementById('admin-toggle-btn');
-    if (toggle) toggle.addEventListener('click', function(){
-      adminMode = !adminMode;
-      render();
-    });
-    var dismiss = document.getElementById('dismiss-sample');
-    if (dismiss) dismiss.addEventListener('click', function(){
-      STATE.isSample = false;
-      render();
-    });
-    if (adminMode){
-      var hn = document.getElementById('hall-name-el');
-      var hs = document.getElementById('hall-subtitle-el');
-      if (hn) hn.addEventListener('blur', function(){
-        var v = hn.textContent.trim();
-        if (v && v !== STATE.meta.hallName){ STATE.meta.hallName = v; persist(); }
-      });
-      if (hs) hs.addEventListener('blur', function(){
-        var v = hs.textContent.trim();
-        if (v && v !== STATE.meta.subtitle){ STATE.meta.subtitle = v; persist(); }
-      });
-      var addExhibitBtn = document.getElementById('add-exhibit-btn');
-      if (addExhibitBtn) addExhibitBtn.addEventListener('click', openAddModal);
-      var langBtn = document.getElementById('lang-manager-btn');
-      if (langBtn) langBtn.addEventListener('click', openLanguageManagerModal);
-      app.querySelectorAll('[data-edit]').forEach(function(b){
-        b.addEventListener('click', function(){ openEditModal(Number(b.getAttribute('data-edit'))); });
-      });
-      app.querySelectorAll('[data-delete]').forEach(function(b){
-        b.addEventListener('click', function(){ confirmDelete(Number(b.getAttribute('data-delete'))); });
-      });
-      app.querySelectorAll('[data-print]').forEach(function(b){
-        b.addEventListener('click', function(){ openPrintModal(Number(b.getAttribute('data-print'))); });
-      });
-    }
   }
 
   function renderDetail(idStr){
@@ -460,7 +293,6 @@ a{color:var(--celadon);}
     var ex = findExhibit(idStr);
     if (!ex){
       app.innerHTML = headerHtml() + '<div class="empty-state">전시품을 찾을 수 없습니다. <a href="#/">전체 목록으로 돌아가기</a></div>';
-      wireHeaderOnly();
       return;
     }
     var keys = langList(ex);
@@ -492,320 +324,9 @@ a{color:var(--celadon);}
         renderDetail(ex.id);
       });
     });
-    wireHeaderOnly();
-  }
-
-  function wireHeaderOnly(){
-    var toggle = document.getElementById('admin-toggle-btn');
-    if (toggle) toggle.addEventListener('click', function(){
-      adminMode = !adminMode;
-      location.hash = '#/';
-    });
-    var langBtn = document.getElementById('lang-manager-btn');
-    if (langBtn) langBtn.addEventListener('click', openLanguageManagerModal);
-  }
-
-  // ---- Edit modal ----
-  function closeModal(){
-    var b = document.querySelector('.modal-backdrop');
-    if (b) b.remove();
-  }
-
-  function openAddModal(){
-    var ex = {
-      id: STATE.nextId++,
-      catalogNo: '',
-      imageUrl: '',
-      langs: {}
-    };
-    STATE.meta.languages.forEach(function(pair){ ex.langs[pair[0]] = {label: pair[1], title:'', body:''}; });
-    editing = {exhibit: ex, isNew: true, activeLang: primaryLang(ex)};
-    renderEditModal();
-  }
-  function openEditModal(id){
-    var ex = findExhibit(id);
-    if (!ex) return;
-    editing = {exhibit: JSON.parse(JSON.stringify(ex)), isNew:false, activeLang: primaryLang(ex)};
-    renderEditModal();
-  }
-
-  function renderEditModal(){
-    closeModal();
-    var ex = editing.exhibit;
-    var keys = langList(ex);
-    var backdrop = document.createElement('div');
-    backdrop.className = 'modal-backdrop';
-    var cur = ex.langs[editing.activeLang] || {title:'',body:''};
-    backdrop.innerHTML =
-      '<div class="modal" role="dialog" aria-modal="true">' +
-        '<h2>' + (editing.isNew ? '전시품 추가' : '전시품 수정') + '</h2>' +
-        '<div class="field"><label for="f-catalog">전시(소장품) 번호</label>' +
-          '<input type="text" id="f-catalog" value="' + esc(ex.catalogNo) + '" placeholder="예: 2F-03"></div>' +
-        '<div class="field"><label>사진 (선택)</label>' +
-          '<div class="image-field-row">' +
-            (ex.imageUrl ?
-              '<img class="image-preview" id="image-preview" src="' + esc(ex.imageUrl) + '" alt="">' :
-              '<span class="image-preview-empty" id="image-preview">사진 없음</span>') +
-            '<div class="image-field-actions">' +
-              '<input type="file" id="f-image-file" accept="image/*" style="display:none">' +
-              '<button type="button" class="btn btn-sm" id="choose-image-btn">사진 선택</button>' +
-              (ex.imageUrl ? '<button type="button" class="btn btn-sm btn-ghost" id="remove-image-btn">삭제</button>' : '') +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-        '<div class="hairline" style="margin:1.2rem 0;"></div>' +
-        '<div class="edit-lang-tabs" id="edit-lang-tabs">' +
-          keys.map(function(k){
-            return '<button class="edit-lang-tab" aria-selected="' + (k===editing.activeLang?'true':'false') + '" data-lang="' + esc(k) + '">' + esc(ex.langs[k].label) + '</button>';
-          }).join('') +
-        '</div>' +
-        '<div class="ai-row" id="ai-row"></div>' +
-        '<div class="field"><label for="f-title">제목 (' + esc(cur.label || editing.activeLang) + ')</label>' +
-          '<input type="text" id="f-title" value="' + esc(cur.title) + '"></div>' +
-        '<div class="field"><label for="f-body">설명 (' + esc(cur.label || editing.activeLang) + ')</label>' +
-          '<textarea id="f-body">' + esc(cur.body) + '</textarea></div>' +
-        '<p class="helper-text">언어 자체를 추가하거나 삭제하려면 전체 목록 화면의 "언어 관리"를 이용하세요. 여기서는 각 언어의 제목·설명만 입력합니다.</p>' +
-        '<p class="helper-text">QR코드는 저장 후 자동으로 생성되어 이 전시품 카드에 표시됩니다.</p>' +
-        '<div class="modal-actions">' +
-          '<button class="btn btn-ghost" id="cancel-edit-btn">취소</button>' +
-          '<div class="right">' +
-            (editing.isNew ? '' : '<button class="btn btn-danger" id="delete-from-modal-btn">삭제</button>') +
-            '<button class="btn btn-primary" id="save-edit-btn">저장</button>' +
-          '</div>' +
-        '</div>' +
-      '</div>';
-    document.body.appendChild(backdrop);
-
-    function syncFieldsToState(){
-      ex.catalogNo = document.getElementById('f-catalog').value.trim();
-      var t = document.getElementById('f-title');
-      var b = document.getElementById('f-body');
-      if (t && b) ex.langs[editing.activeLang].title = t.value;
-      if (t && b) ex.langs[editing.activeLang].body = b.value;
-    }
-
-    document.getElementById('choose-image-btn').addEventListener('click', function(){
-      document.getElementById('f-image-file').click();
-    });
-    document.getElementById('f-image-file').addEventListener('change', function(e){
-      var file = e.target.files[0];
-      if (!file) return;
-      if (!/^image\//.test(file.type)){ toast('이미지 파일만 선택할 수 있습니다.'); return; }
-      if (file.size > 8 * 1024 * 1024){ toast('이미지 파일은 8MB 이하로 선택해 주세요.'); return; }
-      resizeImageFile(file, 1200, 0.82, function(dataUrl){
-        if (!dataUrl){ toast('이미지를 불러오지 못했습니다. 다른 파일을 시도해 주세요.'); return; }
-        syncFieldsToState();
-        ex.imageUrl = dataUrl;
-        renderEditModal();
-      });
-    });
-    var removeImageBtn = document.getElementById('remove-image-btn');
-    if (removeImageBtn) removeImageBtn.addEventListener('click', function(){
-      syncFieldsToState();
-      ex.imageUrl = '';
-      renderEditModal();
-    });
-
-    backdrop.querySelectorAll('[data-lang]').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        syncFieldsToState();
-        editing.activeLang = btn.getAttribute('data-lang');
-        renderEditModal();
-      });
-    });
-    document.getElementById('cancel-edit-btn').addEventListener('click', function(){
-      editing = null; closeModal();
-    });
-    document.getElementById('save-edit-btn').addEventListener('click', function(){
-      syncFieldsToState();
-      if (!ex.catalogNo){ toast('전시(소장품) 번호를 입력해 주세요.'); return; }
-      var hasTitle = Object.keys(ex.langs).some(function(k){ return ex.langs[k].title.trim(); });
-      if (!hasTitle){ toast('최소 한 언어의 제목을 입력해 주세요.'); return; }
-      if (editing.isNew){
-        STATE.exhibits.push(ex);
-      } else {
-        var idx = STATE.exhibits.findIndex(function(e){ return e.id === ex.id; });
-        STATE.exhibits[idx] = ex;
-      }
-      editing = null;
-      closeModal();
-      persist(render);
-    });
-    var delBtn = document.getElementById('delete-from-modal-btn');
-    if (delBtn) delBtn.addEventListener('click', function(){
-      closeModal();
-      editing = null;
-      confirmDelete(ex.id);
-    });
-
-    renderAiRow();
-  }
-
-  function renderAiRow(){
-    var row = document.getElementById('ai-row');
-    if (!row) return;
-    row.innerHTML = '';
-    if (!sampleCap) return;
-    if (editing.activeLang === 'ko') return;
-    var ex = editing.exhibit;
-    var koLang = ex.langs.ko;
-    if (!koLang || !koLang.title.trim()) return;
-    var btn = document.createElement('button');
-    btn.className = 'ai-btn';
-    btn.textContent = 'AI 번역 제안 받기';
-    btn.addEventListener('click', function(){
-      btn.disabled = true;
-      btn.textContent = '번역 중...';
-      var targetLabel = ex.langs[editing.activeLang].label;
-      var prompt = '다음은 박물관 전시품 안내판의 한국어 원문입니다. 이것을 ' + targetLabel +
-        '로 자연스럽고 간결한 전시 안내판 문체로 번역해 주세요.\n제목: ' + koLang.title +
-        '\n설명: ' + koLang.body +
-        '\n\n반드시 이 형식으로만 답하세요 (다른 말 없이):\n제목: <번역된 제목>\n설명: <번역된 설명>';
-      sampleCap(prompt, {modelTier:'quick'}).then(function(res){
-        var text = res.text || '';
-        var titleMatch = text.match(/제목\s*[:：]\s*([^\n]+)/);
-        var bodyMatch = text.match(/설명\s*[:：]\s*([\s\S]+)/);
-        var tEl = document.getElementById('f-title');
-        var bEl = document.getElementById('f-body');
-        if (titleMatch && tEl) tEl.value = titleMatch[1].trim();
-        if (bodyMatch && bEl) bEl.value = bodyMatch[1].trim();
-        if (!titleMatch && !bodyMatch && tEl && bEl){ bEl.value = text.trim(); }
-        btn.disabled = false;
-        btn.textContent = '다시 번역 받기';
-      }).catch(function(err){
-        var code = err && err.code;
-        if (code === 'not_granted'){ row.innerHTML = ''; return; }
-        toast('AI 번역을 가져오지 못했습니다.');
-        btn.disabled = false;
-        btn.textContent = 'AI 번역 제안 받기';
-      });
-    });
-    row.appendChild(btn);
-  }
-
-  function openLanguageManagerModal(){
-    closeModal();
-    var backdrop = document.createElement('div');
-    backdrop.className = 'modal-backdrop';
-    document.body.appendChild(backdrop);
-    renderLanguageManagerInto(backdrop);
-  }
-
-  function renderLanguageManagerInto(backdrop){
-    var rows = STATE.meta.languages.map(function(pair){
-      var count = STATE.exhibits.filter(function(ex){ return ex.langs[pair[0]] && ex.langs[pair[0]].title.trim(); }).length;
-      return (
-        '<div class="lang-manage-row">' +
-          '<span class="lang-manage-code">' + esc(pair[0]) + '</span>' +
-          '<span class="lang-manage-label">' + esc(pair[1]) + '</span>' +
-          '<span class="lang-manage-count">' + count + ' / ' + STATE.exhibits.length + '개 전시품에 작성됨</span>' +
-          '<button class="btn btn-sm btn-danger" data-remove-lang="' + esc(pair[0]) + '"' + (STATE.meta.languages.length <= 1 ? ' disabled' : '') + '>삭제</button>' +
-        '</div>'
-      );
-    }).join('');
-    backdrop.innerHTML =
-      '<div class="modal" role="dialog" aria-modal="true">' +
-        '<h2>언어 관리</h2>' +
-        '<p class="helper-text">여기서 추가하거나 삭제하는 언어는 전시품 전체에 한 번에 적용됩니다.</p>' +
-        '<div class="lang-manage-list">' + rows + '</div>' +
-        '<div class="hairline" style="margin:1.2rem 0;"></div>' +
-        '<div class="add-lang-row">' +
-          '<div class="field"><label for="f-newlang-code">언어 코드</label><input type="text" id="f-newlang-code" placeholder="예: ru"></div>' +
-          '<div class="field"><label for="f-newlang-label">언어 이름</label><input type="text" id="f-newlang-label" placeholder="예: Русский"></div>' +
-          '<button class="btn btn-primary btn-sm" id="add-lang-global-btn">모든 전시품에 추가</button>' +
-        '</div>' +
-        '<div class="modal-actions"><span></span><button class="btn btn-ghost" id="close-lang-manager">닫기</button></div>' +
-      '</div>';
-    document.getElementById('close-lang-manager').addEventListener('click', closeModal);
-    backdrop.querySelectorAll('[data-remove-lang]').forEach(function(b){
-      b.addEventListener('click', function(){
-        var code = b.getAttribute('data-remove-lang');
-        var pair = STATE.meta.languages.find(function(p){ return p[0] === code; });
-        var confirmBackdrop = document.createElement('div');
-        confirmBackdrop.className = 'modal-backdrop';
-        confirmBackdrop.innerHTML =
-          '<div class="modal">' +
-            '<h2>언어 삭제</h2>' +
-            '<p>"' + esc(pair[1]) + '" 언어를 모든 전시품에서 삭제할까요? 해당 언어로 작성된 내용도 함께 삭제되며 되돌릴 수 없습니다.</p>' +
-            '<div class="modal-actions"><button class="btn btn-ghost" id="cancel-remove-lang">취소</button>' +
-            '<button class="btn btn-danger" id="confirm-remove-lang">삭제</button></div>' +
-          '</div>';
-        document.body.appendChild(confirmBackdrop);
-        document.getElementById('cancel-remove-lang').addEventListener('click', function(){ confirmBackdrop.remove(); });
-        document.getElementById('confirm-remove-lang').addEventListener('click', function(){
-          confirmBackdrop.remove();
-          if (removeLanguageGlobally(code)) persist(function(){ renderLanguageManagerInto(backdrop); render(); });
-        });
-      });
-    });
-    document.getElementById('add-lang-global-btn').addEventListener('click', function(){
-      var code = document.getElementById('f-newlang-code').value.trim();
-      var label = document.getElementById('f-newlang-label').value.trim();
-      if (addLanguageGlobally(code, label)) persist(function(){ renderLanguageManagerInto(backdrop); render(); });
-    });
-  }
-
-  function confirmDelete(id){
-    var ex = findExhibit(id);
-    if (!ex) return;
-    var backdrop = document.createElement('div');
-    backdrop.className = 'modal-backdrop';
-    backdrop.innerHTML =
-      '<div class="modal">' +
-        '<h2>전시품 삭제</h2>' +
-        '<p>"' + esc((ex.langs[primaryLang(ex)]||{}).title || ex.catalogNo) + '"을(를) 삭제할까요? 이 작업은 되돌릴 수 없습니다.</p>' +
-        '<div class="modal-actions"><button class="btn btn-ghost" id="cancel-del">취소</button>' +
-        '<button class="btn btn-danger" id="confirm-del">삭제</button></div>' +
-      '</div>';
-    document.body.appendChild(backdrop);
-    document.getElementById('cancel-del').addEventListener('click', closeModal);
-    document.getElementById('confirm-del').addEventListener('click', function(){
-      STATE.exhibits = STATE.exhibits.filter(function(e){ return e.id !== id; });
-      closeModal();
-      persist(render);
-    });
-  }
-
-  function openPrintModal(id){
-    var ex = findExhibit(id);
-    if (!ex) return;
-    var lang = ex.langs[primaryLang(ex)];
-    var backdrop = document.createElement('div');
-    backdrop.className = 'modal-backdrop';
-    backdrop.innerHTML =
-      '<div class="modal qr-modal-body">' +
-        '<h2 style="align-self:flex-start;">QR 라벨 인쇄</h2>' +
-        '<span class="catalog-tag">' + esc(ex.catalogNo) + '</span>' +
-        '<h3 class="exhibit-title" style="font-size:1.3rem;">' + esc(lang.title) + '</h3>' +
-        '<span class="qr-chip" id="print-qr-preview" style="padding:1rem;"></span>' +
-        '<div class="modal-actions" style="width:100%;">' +
-          '<button class="btn btn-ghost" id="cancel-print">닫기</button>' +
-          '<button class="btn btn-primary" id="do-print">인쇄하기</button>' +
-        '</div>' +
-      '</div>';
-    document.body.appendChild(backdrop);
-    renderQrInto(document.getElementById('print-qr-preview'), qrUrl(ex.id), 200);
-    document.getElementById('cancel-print').addEventListener('click', closeModal);
-    document.getElementById('do-print').addEventListener('click', function(){
-      var printEl = document.getElementById('print-label');
-      printEl.innerHTML =
-        '<span class="catalog-tag">' + esc(ex.catalogNo) + '</span>' +
-        '<h2 class="exhibit-title">' + esc(lang.title) + '</h2>' +
-        '<span class="qr-chip" id="print-qr-final"></span>' +
-        '<span class="detail-qr-caption">' + esc(qrUrl(ex.id)) + '</span>';
-      renderQrInto(document.getElementById('print-qr-final'), qrUrl(ex.id), 220);
-      window.print();
-    });
   }
 
   function render(){ route(); }
-
-  if (!document.getElementById('print-label')){
-    var pl = document.createElement('div');
-    pl.id = 'print-label';
-    document.body.appendChild(pl);
-  }
-
   window.addEventListener('hashchange', render);
   render();
 })();
